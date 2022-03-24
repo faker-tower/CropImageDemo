@@ -11,8 +11,17 @@
         <entry key="..\:/Android/AndroidProject/CropImageDemo/app/src/main/res/layout/fragment_image.xml" value="0.17755825734549138" />
         <entry key="..\:/Android/AndroidProject/CropImageDemo/app/src/main/res/layout/item_buckets.xml" value="0.17755825734549138" />
         <entry key="..\:/Android/AndroidProject/CropImageDemo/app/src/main/res/layout/item_image.xml" value="0.17755825734549138" />
-        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/activity_edit_image.xml" value="0.1702127659574468" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.145" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/drawable/ic_back.xml" value="0.145" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/drawable/ic_baseline_chevron_left_24.xml" value="0.145" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/drawable/ic_launcher_background.xml" value="0.145" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/activity_edit_image.xml" value="0.2" />
         <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/activity_main.xml" value="0.17755825734549138" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/fragment_main_menu.xml" value="0.11629064366290644" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/fragment_sticker.xml" value="0.11629064366290644" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/item_image.xml" value="0.11629064366290644" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/item_sticker.xml" value="0.11629064366290644" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/item_sticker_type.xml" value="0.11629064366290644" />
       </map>
     </option>
   </component>

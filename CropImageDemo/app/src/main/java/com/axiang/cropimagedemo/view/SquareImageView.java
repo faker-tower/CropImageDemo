@@ -1,4 +1,4 @@
-package com.axiang.cropimagedemo.widget;
+package com.axiang.cropimagedemo.view;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -7,6 +7,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 
+/**
+ * 正方形 ImageView
+ */
 public class SquareImageView extends AppCompatImageView {
 
     public SquareImageView(@NonNull Context context) {

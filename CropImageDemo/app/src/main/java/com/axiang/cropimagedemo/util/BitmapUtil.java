@@ -1,11 +1,14 @@
 package com.axiang.cropimagedemo.util;
 
+import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 public class BitmapUtil {
 
@@ -20,7 +23,7 @@ public class BitmapUtil {
 
         final Bitmap retBit = BitmapFactory.decodeFile(filePath, options);
         final int degree = readPictureDegree(filePath);
-        return degree > 0?rotateBitmap(degree , retBit):retBit;
+        return degree > 0 ? rotateBitmap(degree, retBit) : retBit;
     }
 
     public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
@@ -76,6 +79,7 @@ public class BitmapUtil {
 
     /**
      * 旋转图片
+     *
      * @param degree 被旋转角度
      * @param bitmap 图片对象
      * @return 旋转后的图片
@@ -97,5 +101,21 @@ public class BitmapUtil {
             bitmap.recycle();
         }
         return returnBm;
+    }
+
+    /**
+     * 从Assert文件夹中读取位图数据
+     */
+    public static Bitmap getBitmapFromAssetsFile(Context context, String fileName) {
+        Bitmap result = null;
+        AssetManager am = context.getResources().getAssets();
+        try {
+            InputStream is = am.open(fileName);
+            result = BitmapFactory.decodeStream(is);
+            is.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 }
