@@ -5,7 +5,9 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.media.ExifInterface;
+import android.util.Log;
+
+import androidx.exifinterface.media.ExifInterface;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,6 +15,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class BitmapUtil {
+
+    public static final String TAG = "BitmapUtil";
 
     public static Bitmap getSampledBitmap(String filePath, int reqWidth, int reqHeight) {
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -72,7 +76,7 @@ public class BitmapUtil {
                     break;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "readPictureDegree 方法抛出了异常：" + e);
         }
         return degree;
     }
@@ -114,7 +118,7 @@ public class BitmapUtil {
             result = BitmapFactory.decodeStream(is);
             is.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "getBitmapFromAssetsFile 方法抛出了异常：" + e);
         }
         return result;
     }
@@ -135,7 +139,7 @@ public class BitmapUtil {
             fos.close();
             return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "saveBitmap 方法抛出了异常：" + e);
             return false;
         }
     }

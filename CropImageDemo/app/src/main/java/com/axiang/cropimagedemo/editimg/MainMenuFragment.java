@@ -47,11 +47,11 @@ public class MainMenuFragment extends BaseEditImageFragment {
 
     @Override
     public void onShow() {
-
+        // 不用处理
     }
 
     @Override
     public void backToMain() {
-
+        // 不用处理
     }
 }

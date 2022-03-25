@@ -1,6 +1,8 @@
 package com.axiang.cropimagedemo.editimg.sticker;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,8 +21,10 @@ import java.util.List;
 
 public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHolder> {
 
+    public static final String TAG = "StickerAdapter";
+
     private final Context mContext;
-    private List<String> mStickerPathList = new ArrayList<>();  // 图片路径列表
+    private final List<String> mStickerPathList = new ArrayList<>();  // 图片路径列表
 
     private OnItemClickListener mOnItemClickListener;
 
@@ -56,6 +60,7 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
         mOnItemClickListener = onItemClickListener;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void addStickerImages(String folderPath) {
         mStickerPathList.clear();
         try {
@@ -64,14 +69,14 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
                 mStickerPathList.add(folderPath + File.separator + name);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "addStickerImages 方法抛出了异常：" + e);
         }
-        this.notifyDataSetChanged();
+        notifyDataSetChanged();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
-        private ImageView mIvSticker;
+        private final ImageView mIvSticker;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);

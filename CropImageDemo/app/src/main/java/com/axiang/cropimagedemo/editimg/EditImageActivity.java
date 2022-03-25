@@ -3,7 +3,6 @@ package com.axiang.cropimagedemo.editimg;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -26,7 +25,7 @@ import com.axiang.cropimagedemo.view.ScrollableViewPager;
 import com.axiang.cropimagedemo.view.imagezoom.ImageViewTouch;
 import com.axiang.cropimagedemo.view.sticker.StickerView;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.bumptech.glide.request.transition.Transition;
 
 import java.lang.annotation.Retention;
@@ -122,16 +121,11 @@ public class EditImageActivity extends AppCompatActivity {
                 .asBitmap()
                 .load(Uri.parse("file://" + mImagePath))
                 .fitCenter()
-                .into(new CustomTarget<Bitmap>() {
+                .into(new BitmapImageViewTarget(mMainImageView) {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         mMainBitmap = resource;
-                        mMainImageView.setImageBitmap(resource);
-                    }
-
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-
+                        super.onResourceReady(resource, transition);
                     }
                 });
     }

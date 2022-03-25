@@ -66,16 +66,11 @@ public abstract class SaveImageTask extends AsyncTask<Bitmap, Void, Boolean> {
         super.onPostExecute(result);
         mLoadingDialog.dismiss();
 
-        if (result) {   // 保存成功
-            onPostResult();
+        if (!result) {
+            ToastUtil.showShort("图片保存失败");
             return;
         }
-
-        EditImageActivity activity = mEditImageActReference.get();
-        if (activity == null || activity.isFinishing()) {
-            return;
-        }
-        ToastUtil.showShort("图片保存失败");
+        onPostResult();
     }
 
     public abstract void onPostResult();

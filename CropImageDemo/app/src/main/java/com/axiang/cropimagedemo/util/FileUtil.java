@@ -5,6 +5,7 @@ import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.axiang.cropimagedemo.MainApplication;
 
@@ -13,6 +14,7 @@ import java.io.FileNotFoundException;
 
 public class FileUtil {
 
+    public static final String TAG = "FileUtil";
     public static final String FOLDER_NAME = "xiangtietu";
 
     /**
@@ -65,9 +67,11 @@ public class FileUtil {
 
         try {
             MediaStore.Images.Media.insertImage(MainApplication.getContext().getContentResolver(),
-                    file.getAbsolutePath(), getFileName(picPath), null);
+                    file.getAbsolutePath(),
+                    getFileName(picPath),
+                    null);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Log.e(TAG, "addPicToAlbum 方法抛出了异常：" + e);
         }
 
         // 通知图库更新
