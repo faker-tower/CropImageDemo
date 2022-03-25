@@ -1,5 +1,7 @@
 package com.axiang.cropimagedemo.editimg;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -19,6 +21,7 @@ import androidx.fragment.app.FragmentPagerAdapter;
 
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.sticker.StickerFragment;
+import com.axiang.cropimagedemo.util.FileUtil;
 import com.axiang.cropimagedemo.view.ScrollableViewPager;
 import com.axiang.cropimagedemo.view.imagezoom.ImageViewTouch;
 import com.axiang.cropimagedemo.view.sticker.StickerView;
@@ -38,6 +41,9 @@ public class EditImageActivity extends AppCompatActivity {
         int STICKERS = 1;   // 贴图模式
     }
 
+    public static final String INTENT_IMAGE_PATH = "image_path";
+    public static final String INTENT_SAVE_FILE_PATH = "save_file_path";
+
     private ImageView mIvBack;
     private TextView mTvSave;
     private TextView mTvApply;
@@ -49,13 +55,21 @@ public class EditImageActivity extends AppCompatActivity {
 
     public Bitmap mMainBitmap;  // 底层显示Bitmap
 
-    private String mImgPath;    // 需要编辑的图片路径
-    private String mOutputFilePath; // 保存新图片的路径
+    private String mImagePath;    // 需要编辑的图片路径
+    private String mSaveFilePath; // 保存新图片的路径
+    private SavePicTask mSavePicTask;
 
     public MainMenuFragment mMainMenuFragment;  // 底部操作栏 Fragment
     public StickerFragment mStickerFragment;    // 贴图 Fragment
 
     public int mMode = Mode.NONE;  // 当前操作模式
+
+    public static void startActivityForResult(@NonNull Activity activity, String imagePath, String saveFilePath, int requestCode) {
+        Intent intent = new Intent(activity, EditImageActivity.class);
+        intent.putExtra(INTENT_IMAGE_PATH, imagePath);
+        intent.putExtra(INTENT_SAVE_FILE_PATH, saveFilePath);
+        activity.startActivityForResult(intent, requestCode);
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -68,8 +82,8 @@ public class EditImageActivity extends AppCompatActivity {
     }
 
     private void getIntentData() {
-        mImgPath = getIntent().getStringExtra("imgPath");
-        mOutputFilePath = getIntent().getStringExtra("outputFilePath");
+        mImagePath = getIntent().getStringExtra(INTENT_IMAGE_PATH);
+        mSaveFilePath = getIntent().getStringExtra(INTENT_SAVE_FILE_PATH);
     }
 
     private void initView() {
@@ -90,6 +104,7 @@ public class EditImageActivity extends AppCompatActivity {
 
         mIvBack.setOnClickListener(view -> confirmBack());
         mTvApply.setOnClickListener(view -> onApplyClick());
+        mTvSave.setOnClickListener(view -> onSaveClick());
     }
 
     private void initFragments() {
@@ -105,18 +120,18 @@ public class EditImageActivity extends AppCompatActivity {
     private void loadImage() {
         Glide.with(this)
                 .asBitmap()
-                .load(Uri.parse("file://" + mImgPath))
+                .load(Uri.parse("file://" + mImagePath))
                 .fitCenter()
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         mMainBitmap = resource;
-                        mMainImageView.setImageBitmap(mMainBitmap);
+                        mMainImageView.setImageBitmap(resource);
                     }
 
                     @Override
                     public void onLoadCleared(@Nullable Drawable placeholder) {
-                        mMainBitmap = null;
+
                     }
                 });
     }
@@ -133,6 +148,22 @@ public class EditImageActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 保存按钮 点击退出
+     */
+    private void onSaveClick() {
+        doSaveImage();
+    }
+
+    private void doSaveImage() {
+        if (mSavePicTask != null) {
+            mSavePicTask.cancel(true);
+        }
+
+        mSavePicTask = new SavePicTask(this, mSaveFilePath);
+        mSavePicTask.execute(mMainBitmap);
+    }
+
     public void changeMainBitmap(Bitmap newBitmap) {
         if (newBitmap == null || mMainBitmap == newBitmap) {
             return;
@@ -140,6 +171,18 @@ public class EditImageActivity extends AppCompatActivity {
 
         mMainBitmap = newBitmap;
         Glide.with(this).load(mMainBitmap).fitCenter().into(mMainImageView);
+    }
+
+    /**
+     * 保存图片完成，返回主页加载新的图片
+     */
+    public void backToMain() {
+        FileUtil.addPicToAlbum(mSaveFilePath);
+        Intent returnIntent = new Intent();
+        returnIntent.putExtra(INTENT_IMAGE_PATH, mImagePath);
+        returnIntent.putExtra(INTENT_SAVE_FILE_PATH, mSaveFilePath);
+        setResult(RESULT_OK, returnIntent);
+        finish();
     }
 
     @Override
@@ -172,6 +215,22 @@ public class EditImageActivity extends AppCompatActivity {
         @Override
         public int getCount() {
             return 2;
+        }
+    }
+
+    private static class SavePicTask extends SaveImageTask {
+
+        public SavePicTask(@NonNull EditImageActivity activity, String saveFilePath) {
+            super(activity, saveFilePath);
+        }
+
+        @Override
+        public void onPostResult() {
+            EditImageActivity editImageActivity = mEditImageActReference.get();
+            if (editImageActivity == null || editImageActivity.isFinishing()) {
+                return;
+            }
+            editImageActivity.backToMain();
         }
     }
 }

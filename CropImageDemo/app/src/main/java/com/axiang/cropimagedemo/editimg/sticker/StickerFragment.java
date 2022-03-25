@@ -138,10 +138,12 @@ public class StickerFragment extends BaseEditImageFragment {
 
         @Override
         public void handleImage(Canvas canvas, Matrix matrix) {
-            if (getActivity() == null || getActivity().isFinishing()) {
+            EditImageActivity editImageActivity = mEditImageActReference.get();
+            if (editImageActivity == null || editImageActivity.isFinishing()) {
                 return;
             }
-            LinkedHashMap<Integer, StickerItem> addItems = getActivity().mStickerView.getStickerBank();
+
+            LinkedHashMap<Integer, StickerItem> addItems = editImageActivity.mStickerView.getStickerBank();
             for (Integer id : addItems.keySet()) {
                 StickerItem item = addItems.get(id);
                 if (item != null) {
@@ -153,14 +155,19 @@ public class StickerFragment extends BaseEditImageFragment {
 
         @Override
         public void onPostResult(Bitmap result) {
-            if (mStickerReference == null || mStickerReference.get() == null
-                    || getActivity() == null || getActivity().isFinishing()) {
+            EditImageActivity editImageActivity = mEditImageActReference.get();
+            if (editImageActivity == null || editImageActivity.isFinishing()) {
                 return;
             }
 
-            getActivity().mStickerView.clear();
-            getActivity().changeMainBitmap(result);
-            mStickerReference.get().backToMain();
+            StickerFragment stickerFragment = mStickerReference.get();
+            if (stickerFragment == null || !stickerFragment.isAdded()) {
+                return;
+            }
+
+            editImageActivity.mStickerView.clear();
+            editImageActivity.changeMainBitmap(result);
+            stickerFragment.backToMain();
         }
     }
 }

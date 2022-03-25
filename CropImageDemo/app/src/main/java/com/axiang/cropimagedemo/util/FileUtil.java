@@ -1,8 +1,15 @@
 package com.axiang.cropimagedemo.util;
 
+import android.content.Intent;
+import android.media.MediaScannerConnection;
 import android.os.Environment;
+import android.provider.MediaStore;
+import android.text.TextUtils;
+
+import com.axiang.cropimagedemo.MainApplication;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 public class FileUtil {
 
@@ -12,7 +19,7 @@ public class FileUtil {
      * 获取存贮文件的文件夹路径
      */
     public static File createFolders() {
-        File baseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File baseDir = MainApplication.getContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         if (baseDir == null) {
             return Environment.getExternalStorageDirectory();
         }
@@ -37,10 +44,51 @@ public class FileUtil {
         File folder = createFolders();
         if (folder != null) {
             if (folder.exists()) {
-                File file = new File(folder, name);
-                return file;
+                return new File(folder, name);
             }
         }
         return null;
+    }
+
+    /**
+     * 将图片文件加入到相册
+     */
+    public static void addPicToAlbum(final String picPath) {
+        if (TextUtils.isEmpty(picPath)) {
+            return;
+        }
+
+        File file = new File(picPath);
+        if (!file.exists() || file.length() == 0) { // 文件若不存在，则不操作
+            return;
+        }
+
+        try {
+            MediaStore.Images.Media.insertImage(MainApplication.getContext().getContentResolver(),
+                    file.getAbsolutePath(), getFileName(picPath), null);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        // 通知图库更新
+        MediaScannerConnection.scanFile(MainApplication.getContext(), new String[]{file.getAbsolutePath()}, null,
+                (path, uri) -> {
+                    Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                    mediaScanIntent.setData(uri);
+                    MainApplication.getContext().sendBroadcast(mediaScanIntent);
+                });
+    }
+
+    /**
+     * 从路径中获取名字
+     */
+    public static String getFileName(String path) {
+        int start = path.lastIndexOf("/");
+        int end = path.lastIndexOf(".");
+        if (start != -1 && end != -1) {
+            return path.substring(start + 1, end);
+        } else {
+            return null;
+        }
     }
 }

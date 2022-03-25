@@ -14,4 +14,8 @@ public class DialogUtil {
         dialog.setMessage(title);
         return dialog;
     }
+
+    public static Dialog newSaveFileDialog(@NonNull Context context) {
+        return newLoadingDialog(context, "图片保存中...", false);
+    }
 }

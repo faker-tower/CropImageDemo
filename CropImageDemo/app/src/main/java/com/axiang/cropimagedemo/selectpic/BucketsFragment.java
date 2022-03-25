@@ -10,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +18,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.axiang.cropimagedemo.R;
+import com.axiang.cropimagedemo.util.ToastUtil;
 import com.axiang.cropimagedemo.widget.GridItemDecoration;
 
 import java.lang.ref.WeakReference;
@@ -66,7 +66,7 @@ public class BucketsFragment extends Fragment {
         mRvBuckets.setVisibility(View.VISIBLE);
 
         if (bucketsItems == null || bucketsItems.isEmpty()) {
-            Toast.makeText(getActivity(), "找不到图片", Toast.LENGTH_SHORT).show();
+            ToastUtil.showShort("找不到图片");
             if (getActivity() != null) {
                 getActivity().finish();
             }

@@ -3,7 +3,6 @@ package com.axiang.cropimagedemo;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,7 +11,6 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,6 +20,7 @@ import androidx.core.app.ActivityCompat;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.selectpic.SelectPicActivity;
 import com.axiang.cropimagedemo.util.FileUtil;
+import com.axiang.cropimagedemo.util.ToastUtil;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
@@ -41,8 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private int mDisplayWidth;
     private int mDisplayHeight;
 
-    private String mImgPath;
-    private Bitmap mMainBitmap;
+    private String mImagePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
                 openAlbum();
                 return;
             }
-            Toast.makeText(this, "需要权限才能打开相册", Toast.LENGTH_SHORT).show();
+            ToastUtil.showShort("需要权限才能打开相册");
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
@@ -100,16 +98,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void toEditPic() {
-        if (TextUtils.isEmpty(mImgPath)) {
-            Toast.makeText(this, "需要先选择一张图片才能去编辑", Toast.LENGTH_SHORT).show();
+        if (TextUtils.isEmpty(mImagePath)) {
+            ToastUtil.showShort("需要先选择一张图片才能去编辑");
             return;
         }
 
-        File outputFile = FileUtil.genEditFile();
-        Intent it = new Intent(this, EditImageActivity.class);
-        it.putExtra("imgPath", mImgPath);
-        it.putExtra("outputFilePath", outputFile.getAbsolutePath());
-        startActivityForResult(it, CODE_EDIT_IMAGE);
+        File saveImageFile = FileUtil.genEditFile();
+        EditImageActivity.startActivityForResult(this, mImagePath, saveImageFile.getAbsolutePath(), CODE_EDIT_IMAGE);
     }
 
     @Override
@@ -117,22 +112,37 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
-                case CODE_SELECT_ALBUM_IMAGE:
+                case CODE_SELECT_ALBUM_IMAGE:   // 相册选取图片返回
                     if (data != null) {
                         handleSelectPic(data);
                     }
                     break;
-                case CODE_EDIT_IMAGE:
-
+                case CODE_EDIT_IMAGE:   // 编辑图片返回
+                    if (data != null) {
+                        handleEditImage(data);
+                    }
+                    break;
             }
         }
     }
 
     private void handleSelectPic(Intent data) {
-        mImgPath = data.getStringExtra("imgPath");
-        Log.d(TAG, "select picture path: " + mImgPath);
+        String selectImagePath = data.getStringExtra("imgPath");
+        Log.d(TAG, "相册选取图片路径: " + selectImagePath);
+        loadPicToImageView(selectImagePath);
+    }
+
+    private void handleEditImage(Intent data) {
+        String newFilePath = data.getStringExtra(EditImageActivity.INTENT_SAVE_FILE_PATH);
+        ToastUtil.showLong(String.format("保存到路径：%s", newFilePath));
+        Log.d(TAG, String.format("保存到路径：%s", newFilePath));
+        loadPicToImageView(newFilePath);
+    }
+
+    private void loadPicToImageView(String newImagePath) {
+        mImagePath = newImagePath;
         Glide.with(this)
-                .load(Uri.parse("file://" + mImgPath))
+                .load(Uri.parse("file://" + mImagePath))
                 .override(mDisplayWidth / 2, mDisplayHeight / 2)
                 .into(mIvImage);
     }

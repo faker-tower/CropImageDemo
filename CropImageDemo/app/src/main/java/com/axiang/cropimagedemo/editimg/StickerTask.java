@@ -8,6 +8,8 @@ import android.graphics.Matrix;
 import android.os.AsyncTask;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
+
 import com.axiang.cropimagedemo.util.DialogUtil;
 import com.axiang.cropimagedemo.util.Matrix3;
 
@@ -20,34 +22,27 @@ public abstract class StickerTask extends AsyncTask<Bitmap, Void, Bitmap> {
 
     protected Dialog mLoadingDialog;
 
-    protected WeakReference<EditImageActivity> mWeakReference;
+    protected final WeakReference<EditImageActivity> mEditImageActReference;
 
-    public StickerTask(EditImageActivity activity) {
-        mWeakReference = new WeakReference<>(activity);
-    }
-
-    protected EditImageActivity getActivity() {
-        if (mWeakReference == null || mWeakReference.get() == null) {
-            return null;
-        }
-        return mWeakReference.get();
+    public StickerTask(@NonNull EditImageActivity activity) {
+        mEditImageActReference = new WeakReference<>(activity);
     }
 
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        EditImageActivity activity = getActivity();
+        EditImageActivity activity = mEditImageActReference.get();
         if (activity == null || activity.isFinishing()) {
             return;
         }
 
-        mLoadingDialog = DialogUtil.newLoadingDialog(activity, "图片保存中...", false);
+        mLoadingDialog = DialogUtil.newSaveFileDialog(activity);
         mLoadingDialog.show();
     }
 
     @Override
     protected Bitmap doInBackground(Bitmap... params) {
-        EditImageActivity activity = getActivity();
+        EditImageActivity activity = mEditImageActReference.get();
         if (activity == null || activity.isFinishing()) {
             return null;
         }
