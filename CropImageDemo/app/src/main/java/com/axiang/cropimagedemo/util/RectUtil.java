@@ -4,15 +4,10 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 
-/**
- * Created by panyi on 2016/6/16.
- */
 public class RectUtil {
+
     /**
      * 缩放指定矩形
-     *
-     * @param rect
-     * @param scale
      */
     public static void scaleRect(RectF rect, float scale) {
         float w = rect.width();
@@ -32,16 +27,12 @@ public class RectUtil {
 
     /**
      * 矩形绕指定点旋转
-     *
-     * @param rect
-     * @param roatetAngle
      */
-    public static void rotateRect(RectF rect, float center_x, float center_y,
-                                  float roatetAngle) {
+    public static void rotateRect(RectF rect, float center_x, float center_y, float rotateAngle) {
         float x = rect.centerX();
         float y = rect.centerY();
-        float sinA = (float) Math.sin(Math.toRadians(roatetAngle));
-        float cosA = (float) Math.cos(Math.toRadians(roatetAngle));
+        float sinA = (float) Math.sin(Math.toRadians(rotateAngle));
+        float cosA = (float) Math.cos(Math.toRadians(rotateAngle));
         float newX = center_x + (x - center_x) * cosA - (y - center_y) * sinA;
         float newY = center_y + (y - center_y) * cosA + (x - center_x) * sinA;
 
@@ -53,32 +44,29 @@ public class RectUtil {
 
     /**
      * 旋转Point点
-     * @param p
-     * @param center_x
-     * @param center_y
-     * @param roatetAngle
+     * <p>
+     * 计算某点绕点旋转后的坐标公式
+     * x1，y1：要旋转的点；x2，y2：要绕的点；A:要旋转的弧度
+     * x = (x1 - x2) * cos(A) - (y1 - y2) * sin(A) + x2 ;
+     * y = (x1 - x2) * sin(A) + (y1 - y2) * cos(A) + y2 ;
      */
-    public static void rotatePoint(Point p, float center_x, float center_y,
-                                   float roatetAngle) {
-        float sinA = (float) Math.sin(Math.toRadians(roatetAngle));
-        float cosA = (float) Math.cos(Math.toRadians(roatetAngle));
-        // calc new point
+    public static void rotatePoint(Point p, float center_x, float center_y, float rotateAngle) {
+        float sinA = (float) Math.sin(Math.toRadians(rotateAngle));
+        float cosA = (float) Math.cos(Math.toRadians(rotateAngle));
+        // 计算新的坐标点
         float newX = center_x + (p.x - center_x) * cosA - (p.y - center_y) * sinA;
         float newY = center_y + (p.y - center_y) * cosA + (p.x - center_x) * sinA;
-        p.set((int)newX , (int)newY);
+        p.set((int) newX, (int) newY);
     }
 
 
     /**
      * 矩形在Y轴方向上的加法操作
-     *
-     * @param srcRect
-     * @param addRect
-     * @param padding
      */
     public static void rectAddV(final RectF srcRect, final RectF addRect, int padding) {
-        if (srcRect == null || addRect == null)
+        if (srcRect == null || addRect == null) {
             return;
+        }
 
         float left = srcRect.left;
         float top = srcRect.top;
@@ -96,14 +84,11 @@ public class RectUtil {
 
     /**
      * 矩形在Y轴方向上的加法操作
-     *
-     * @param srcRect
-     * @param addRect
-     * @param padding
      */
-    public static void rectAddV(final Rect srcRect, final Rect addRect, int padding , int charMinHeight) {
-        if (srcRect == null || addRect == null)
+    public static void rectAddV(final Rect srcRect, final Rect addRect, int padding, int charMinHeight) {
+        if (srcRect == null || addRect == null) {
             return;
+        }
 
         int left = srcRect.left;
         int top = srcRect.top;
@@ -118,4 +103,4 @@ public class RectUtil {
 
         srcRect.set(left, top, right, bottom);
     }
-}//end class
+}

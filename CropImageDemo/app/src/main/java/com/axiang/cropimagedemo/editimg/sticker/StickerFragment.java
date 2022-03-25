@@ -1,5 +1,8 @@
 package com.axiang.cropimagedemo.editimg.sticker;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +19,12 @@ import com.axiang.cropimagedemo.ModuleConfig;
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
+import com.axiang.cropimagedemo.editimg.StickerTask;
 import com.axiang.cropimagedemo.util.BitmapUtil;
+import com.axiang.cropimagedemo.view.sticker.StickerItem;
+
+import java.lang.ref.WeakReference;
+import java.util.LinkedHashMap;
 
 /**
  * 贴图 Fragment
@@ -32,6 +40,8 @@ public class StickerFragment extends BaseEditImageFragment {
     private RecyclerView mRvStickerList;
 
     private StickerAdapter mStickerAdapter;
+
+    private SaveStickersTask mSaveStickersTask;
 
     public static StickerFragment newInstance() {
         return new StickerFragment();
@@ -101,5 +111,56 @@ public class StickerFragment extends BaseEditImageFragment {
     public void swipeToStickerDetail(String path) {
         mStickerAdapter.addStickerImages(path);
         mViewFlipperSticker.showNext();
+    }
+
+    /**
+     * 保存贴图层 合成一张图片
+     */
+    public void applyStickers() {
+        if (mSaveStickersTask != null) {
+            mSaveStickersTask.cancel(true);
+        }
+        mSaveStickersTask = new SaveStickersTask(mActivity, this);
+        mSaveStickersTask.execute(mActivity.mMainBitmap);
+    }
+
+    /**
+     * 保存贴图任务
+     */
+    private static class SaveStickersTask extends StickerTask {
+
+        private final WeakReference<StickerFragment> mStickerReference;
+
+        public SaveStickersTask(EditImageActivity activity, StickerFragment stickerFragment) {
+            super(activity);
+            mStickerReference = new WeakReference<>(stickerFragment);
+        }
+
+        @Override
+        public void handleImage(Canvas canvas, Matrix matrix) {
+            if (getActivity() == null || getActivity().isFinishing()) {
+                return;
+            }
+            LinkedHashMap<Integer, StickerItem> addItems = getActivity().mStickerView.getStickerBank();
+            for (Integer id : addItems.keySet()) {
+                StickerItem item = addItems.get(id);
+                if (item != null) {
+                    item.mStickerMatrix.postConcat(matrix); // 乘以底部图片变化矩阵
+                    canvas.drawBitmap(item.mStickerBitmap, item.mStickerMatrix, null);
+                }
+            }
+        }
+
+        @Override
+        public void onPostResult(Bitmap result) {
+            if (mStickerReference == null || mStickerReference.get() == null
+                    || getActivity() == null || getActivity().isFinishing()) {
+                return;
+            }
+
+            getActivity().mStickerView.clear();
+            getActivity().changeMainBitmap(result);
+            mStickerReference.get().backToMain();
+        }
     }
 }

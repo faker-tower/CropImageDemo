@@ -186,7 +186,7 @@ public class ImageViewTouch extends ImageViewTouchBase {
         if (mFlingListener != null) {
             mFlingListener.onFling(e1, e2, velocityX, velocityY);
         }
-        
+
         if (e1.getPointerCount() > 1 || e2.getPointerCount() > 1)
             return false;
         if (mScaleDetector.isInProgress())
@@ -235,9 +235,6 @@ public class ImageViewTouch extends ImageViewTouchBase {
         return bitmapScrollRectDelta > SCROLL_DELTA_THRESHOLD;
     }
 
-    /**
-     * @author
-     */
     public class GestureListener extends
             GestureDetector.SimpleOnGestureListener {
 
@@ -253,8 +250,7 @@ public class ImageViewTouch extends ImageViewTouchBase {
 
         @Override
         public boolean onDoubleTap(MotionEvent e) {
-            Log.i(LOG_TAG, "onDoubleTap. double tap enabled? "
-                    + mDoubleTapEnabled);
+            Log.i(LOG_TAG, "onDoubleTap. double tap enabled? " + mDoubleTapEnabled);
             if (mDoubleTapEnabled) {
                 mUserScaled = true;
                 float scale = getScale();
@@ -295,7 +291,7 @@ public class ImageViewTouch extends ImageViewTouchBase {
                                float velocityY) {
             return ImageViewTouch.this.onFling(e1, e2, velocityX, velocityY);
         }
-    }// end inner class
+    }
 
     public class ScaleListener extends
             ScaleGestureDetector.SimpleOnScaleGestureListener {
@@ -305,7 +301,6 @@ public class ImageViewTouch extends ImageViewTouchBase {
         public boolean onScale(ScaleGestureDetector detector) {
             float span = detector.getCurrentSpan() - detector.getPreviousSpan();
             float targetScale = getScale() * detector.getScaleFactor();
-            // System.out.println("span--->" + span);
             if (mScaleEnabled) {
                 if (mScaled && span != 0) {
                     mUserScaled = true;
@@ -325,7 +320,7 @@ public class ImageViewTouch extends ImageViewTouchBase {
             }
             return true;
         }
-    }// end inner class
+    }
 
     public void resetImage() {
         float scale = getScale();

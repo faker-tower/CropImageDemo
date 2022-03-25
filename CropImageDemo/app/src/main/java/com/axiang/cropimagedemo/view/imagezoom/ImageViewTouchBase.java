@@ -21,8 +21,6 @@ import com.axiang.cropimagedemo.view.imagezoom.utils.IDisposable;
 
 /**
  * Base View to manage image zoom/scrool/pinch operations
- *
- * @author alessandro
  */
 public abstract class ImageViewTouchBase extends AppCompatImageView implements
         IDisposable {
@@ -42,24 +40,14 @@ public abstract class ImageViewTouchBase extends AppCompatImageView implements
     public interface OnLayoutChangeListener {
         /**
          * Callback invoked when the layout bounds changed
-         *
-         * @param changed
-         * @param left
-         * @param top
-         * @param right
-         * @param bottom
          */
         void onLayoutChanged(boolean changed, int left, int top, int right,
                              int bottom);
     }
 
-    ;
-
     /**
      * Use this to change the
      * {@link ImageViewTouchBase#setDisplayType(DisplayType)} of this View
-     *
-     * @author alessandro
      */
     public enum DisplayType {
         /**
@@ -75,8 +63,6 @@ public abstract class ImageViewTouchBase extends AppCompatImageView implements
          */
         FIT_IF_BIGGER
     }
-
-    ;
 
     public static final String LOG_TAG = "ImageViewTouchBase";
     protected static final boolean LOG_ENABLED = false;

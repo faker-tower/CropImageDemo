@@ -11,9 +11,6 @@ import java.io.Closeable;
 
 /**
  * Various I/O utilities
- * 
- * @author alessandro
- * 
  */
 public class IOUtils {
 

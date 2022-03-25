@@ -10,8 +10,6 @@ public class FileUtil {
 
     /**
      * 获取存贮文件的文件夹路径
-     *
-     * @return
      */
     public static File createFolders() {
         File baseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
@@ -32,8 +30,7 @@ public class FileUtil {
     }
 
     public static File genEditFile() {
-        return getEmptyFile("tietu"
-                + System.currentTimeMillis() + ".png");
+        return getEmptyFile("tietu" + System.currentTimeMillis() + ".png");
     }
 
     public static File getEmptyFile(String name) {
@@ -46,5 +43,4 @@ public class FileUtil {
         }
         return null;
     }
-
 }

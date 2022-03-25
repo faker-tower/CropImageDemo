@@ -17,8 +17,7 @@ public class BitmapUtil {
         options.inJustDecodeBounds = true;
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         BitmapFactory.decodeFile(filePath, options);
-        int inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-        options.inSampleSize = inSampleSize;
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
         options.inJustDecodeBounds = false;
 
         final Bitmap retBit = BitmapFactory.decodeFile(filePath, options);
@@ -69,11 +68,10 @@ public class BitmapUtil {
                 case ExifInterface.ORIENTATION_ROTATE_270:
                     degree = 270;
                     break;
-            }//end switch
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("degree = " + degree);
         return degree;
     }
 
