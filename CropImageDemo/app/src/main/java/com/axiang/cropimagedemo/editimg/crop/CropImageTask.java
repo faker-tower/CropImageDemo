@@ -80,7 +80,6 @@ public class CropImageTask extends AsyncTask<Bitmap, Void, Bitmap> {
     @Override
     protected void onPostExecute(Bitmap bitmap) {
         super.onPostExecute(bitmap);
-
         mLoadingDialog.dismiss();
 
         if (bitmap == null) {
@@ -98,5 +97,4 @@ public class CropImageTask extends AsyncTask<Bitmap, Void, Bitmap> {
 
         void onPostExecute(Bitmap result);
     }
-
 }

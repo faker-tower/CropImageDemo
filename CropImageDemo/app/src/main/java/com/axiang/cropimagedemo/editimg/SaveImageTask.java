@@ -84,5 +84,4 @@ public class SaveImageTask extends AsyncTask<Bitmap, Void, Boolean> {
 
         void onPostExecute();
     }
-
 }

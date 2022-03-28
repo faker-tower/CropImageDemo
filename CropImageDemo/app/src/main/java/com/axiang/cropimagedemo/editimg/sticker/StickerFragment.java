@@ -22,13 +22,12 @@ import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.util.BitmapUtil;
 import com.axiang.cropimagedemo.view.sticker.StickerItem;
 
-import java.lang.ref.WeakReference;
 import java.util.LinkedHashMap;
 
 /**
  * 贴图 Fragment
  */
-public class StickerFragment extends BaseEditImageFragment {
+public class StickerFragment extends BaseEditImageFragment implements SaveStickerTask.TaskListener {
 
     public static final int INDEX = ModuleConfig.INDEX_STICKER;
 
@@ -40,7 +39,7 @@ public class StickerFragment extends BaseEditImageFragment {
 
     private StickerAdapter mStickerAdapter;
 
-    private SaveStickersTask mSaveStickersTask;
+    private SaveStickerTask mSaveStickersTask;
 
     public static StickerFragment newInstance() {
         return new StickerFragment();
@@ -104,8 +103,6 @@ public class StickerFragment extends BaseEditImageFragment {
 
     /**
      * 跳转至贴图详情列表
-     *
-     * @param path
      */
     public void swipeToStickerDetail(String path) {
         mStickerAdapter.addStickerImages(path);
@@ -119,54 +116,34 @@ public class StickerFragment extends BaseEditImageFragment {
         if (mSaveStickersTask != null) {
             mSaveStickersTask.cancel(true);
         }
-        mSaveStickersTask = new SaveStickersTask(mActivity, this);
+        mSaveStickersTask = new SaveStickerTask(mActivity, mActivity.mMainImageView.getImageViewMatrix(), this);
         mSaveStickersTask.execute(mActivity.mMainBitmap);
     }
 
-    /**
-     * 保存贴图任务
-     */
-    private static class SaveStickersTask extends StickerTask {
-
-        private final WeakReference<StickerFragment> mStickerReference;
-
-        public SaveStickersTask(EditImageActivity activity, StickerFragment stickerFragment) {
-            super(activity);
-            mStickerReference = new WeakReference<>(stickerFragment);
+    @Override
+    public void handleImage(Canvas canvas, Matrix matrix) {
+        if (!isAdded()) {
+            return;
         }
 
-        @Override
-        public void handleImage(Canvas canvas, Matrix matrix) {
-            EditImageActivity editImageActivity = mEditImageActReference.get();
-            if (editImageActivity == null || editImageActivity.isFinishing()) {
-                return;
-            }
-
-            LinkedHashMap<Integer, StickerItem> addItems = editImageActivity.mStickerView.getStickerBank();
-            for (Integer id : addItems.keySet()) {
-                StickerItem item = addItems.get(id);
-                if (item != null) {
-                    item.mStickerMatrix.postConcat(matrix); // 乘以底部图片变化矩阵
-                    canvas.drawBitmap(item.mStickerBitmap, item.mStickerMatrix, null);
-                }
+        LinkedHashMap<Integer, StickerItem> addItems = mActivity.mStickerView.getStickerBank();
+        for (Integer id : addItems.keySet()) {
+            StickerItem item = addItems.get(id);
+            if (item != null) {
+                item.mStickerMatrix.postConcat(matrix); // 乘以底部图片变化矩阵
+                canvas.drawBitmap(item.mStickerBitmap, item.mStickerMatrix, null);
             }
         }
+    }
 
-        @Override
-        public void onPostResult(Bitmap result) {
-            EditImageActivity editImageActivity = mEditImageActReference.get();
-            if (editImageActivity == null || editImageActivity.isFinishing()) {
-                return;
-            }
-
-            StickerFragment stickerFragment = mStickerReference.get();
-            if (stickerFragment == null || !stickerFragment.isAdded()) {
-                return;
-            }
-
-            editImageActivity.mStickerView.clear();
-            editImageActivity.changeMainBitmap(result);
-            stickerFragment.backToMain();
+    @Override
+    public void onPostExecute(Bitmap result) {
+        if (!isAdded()) {
+            return;
         }
+
+        mActivity.mStickerView.clear();
+        mActivity.changeMainBitmap(result);
+        backToMain();
     }
 }

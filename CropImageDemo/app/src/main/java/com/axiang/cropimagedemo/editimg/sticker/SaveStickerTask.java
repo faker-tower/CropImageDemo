@@ -17,16 +17,21 @@ import com.axiang.cropimagedemo.util.Matrix3;
 import java.lang.ref.WeakReference;
 
 /**
- * 贴图合成任务 抽象类
+ * 贴图合成保存任务 抽象类
  */
-public abstract class StickerTask extends AsyncTask<Bitmap, Void, Bitmap> {
+public class SaveStickerTask extends AsyncTask<Bitmap, Void, Bitmap> {
 
     protected Dialog mLoadingDialog;
 
     protected final WeakReference<EditImageActivity> mEditImageActReference;
+    private final Matrix mMainImageViewMatrix;  // MainImageView 的 Matrix
+    private final TaskListener mListener;
 
-    public StickerTask(@NonNull EditImageActivity activity) {
+    public SaveStickerTask(@NonNull EditImageActivity activity, Matrix mainImageViewMatrix, TaskListener listener) {
+        super();
         mEditImageActReference = new WeakReference<>(activity);
+        mMainImageViewMatrix = mainImageViewMatrix;
+        mListener = listener;
     }
 
     @Override
@@ -43,24 +48,20 @@ public abstract class StickerTask extends AsyncTask<Bitmap, Void, Bitmap> {
 
     @Override
     protected Bitmap doInBackground(Bitmap... params) {
-        EditImageActivity activity = mEditImageActReference.get();
-        if (activity == null || activity.isFinishing()) {
-            return null;
-        }
-
-        Matrix touchMatrix = activity.mMainImageView.getImageViewMatrix();
-
         Bitmap resultBit = Bitmap.createBitmap(params[0]).copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(resultBit);
 
         float[] data = new float[9];
-        touchMatrix.getValues(data);    // 底部图片变化记录矩阵原始数据
+        mMainImageViewMatrix.getValues(data);    // 底部图片变化记录矩阵原始数据
         Matrix3 cal = new Matrix3(data);    // 辅助矩阵计算类
         Matrix3 inverseMatrix = cal.inverseMatrix();    // 计算逆矩阵
         Matrix matrix = new Matrix();
         matrix.setValues(inverseMatrix.getValues());
 
-        handleImage(canvas, matrix);
+        EditImageActivity activity = mEditImageActReference.get();
+        if (activity != null && !activity.isFinishing() && mListener != null) {
+            mListener.handleImage(canvas, matrix);
+        }
         return resultBit;
     }
 
@@ -80,11 +81,18 @@ public abstract class StickerTask extends AsyncTask<Bitmap, Void, Bitmap> {
     @Override
     protected void onPostExecute(Bitmap result) {
         super.onPostExecute(result);
-        onPostResult(result);
         mLoadingDialog.dismiss();
+
+        EditImageActivity activity = mEditImageActReference.get();
+        if (activity != null && !activity.isFinishing() && mListener != null) {
+            mListener.onPostExecute(result);
+        }
     }
 
-    public abstract void handleImage(Canvas canvas, Matrix m);
+    public interface TaskListener {
 
-    public abstract void onPostResult(Bitmap result);
+        void handleImage(Canvas canvas, Matrix matrix);
+
+        void onPostExecute(Bitmap result);
+    }
 }

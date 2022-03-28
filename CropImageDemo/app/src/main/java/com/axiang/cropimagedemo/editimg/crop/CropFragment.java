@@ -112,11 +112,13 @@ public class CropFragment extends BaseEditImageFragment {
     }
 
     private void onPostExecute(Bitmap result) {
-        if (isAdded()) {
-            mActivity.changeMainBitmap(result);
-            mActivity.mCropImageView.setCropRect(mActivity.mMainImageView.getBitmapRect());
-            backToMain();
+        if (!isAdded()) {
+            return;
         }
+
+        mActivity.changeMainBitmap(result);
+        mActivity.mCropImageView.setCropRect(mActivity.mMainImageView.getBitmapRect());
+        backToMain();
     }
 
     @Override
