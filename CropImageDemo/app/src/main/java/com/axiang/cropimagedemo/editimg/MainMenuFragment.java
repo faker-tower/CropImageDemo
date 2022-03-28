@@ -20,6 +20,7 @@ public class MainMenuFragment extends BaseEditImageFragment {
     public static final int INDEX = ModuleConfig.INDEX_MAIN;
 
     private TextView mTvSticker;
+    private TextView mTvCrop;
 
     public static MainMenuFragment newInstance() {
         return new MainMenuFragment();
@@ -35,14 +36,26 @@ public class MainMenuFragment extends BaseEditImageFragment {
 
     private void initView(View rootView) {
         mTvSticker = rootView.findViewById(R.id.tv_sticker);
+        mTvCrop = rootView.findViewById(R.id.tv_crop);
 
         mTvSticker.setOnClickListener(view -> onStickerClick());
+        mTvCrop.setOnClickListener(view -> onCropClick());
     }
 
-    // 贴图
+    /**
+     * 贴图 点击
+     */
     private void onStickerClick() {
         mActivity.mBottomOperateBar.setCurrentItem(ModuleConfig.INDEX_STICKER);
         mActivity.mStickerFragment.onShow();
+    }
+
+    /**
+     * 裁剪 点击
+     */
+    private void onCropClick() {
+        mActivity.mBottomOperateBar.setCurrentItem(ModuleConfig.INDEX_CROP);
+        mActivity.mCropFragment.onShow();
     }
 
     @Override

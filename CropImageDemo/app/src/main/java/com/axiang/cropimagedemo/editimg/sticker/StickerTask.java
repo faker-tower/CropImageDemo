@@ -1,4 +1,4 @@
-package com.axiang.cropimagedemo.editimg;
+package com.axiang.cropimagedemo.editimg.sticker;
 
 import android.annotation.TargetApi;
 import android.app.Dialog;
@@ -10,6 +10,7 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 
+import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.util.DialogUtil;
 import com.axiang.cropimagedemo.util.Matrix3;
 

@@ -7,7 +7,7 @@
         android:id="@+id/title_bar"
         android:layout_width="match_parent"
         android:layout_height="54dp"
-        android:background="@color/teal_200">
+        android:background="@color/purple_700">
 
         <ImageView
             android:id="@+id/iv_back"
@@ -77,6 +77,13 @@
 
         <com.axiang.cropimagedemo.view.sticker.StickerView
             android:id="@+id/sticker_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <com.axiang.cropimagedemo.view.crop.CropImageView
+            android:id="@+id/crop_image_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"

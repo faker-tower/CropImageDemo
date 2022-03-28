@@ -16,16 +16,19 @@ import java.lang.ref.WeakReference;
 /**
  * 保存图像任务 抽象类
  */
-public abstract class SaveImageTask extends AsyncTask<Bitmap, Void, Boolean> {
+public class SaveImageTask extends AsyncTask<Bitmap, Void, Boolean> {
 
     protected Dialog mLoadingDialog;
 
     protected final WeakReference<EditImageActivity> mEditImageActReference;
     protected final String mSaveFilePath; // 保存的图片路径
+    private final TaskExecuteListener mListener;
 
-    public SaveImageTask(@NonNull EditImageActivity activity, String saveFilePath) {
+    public SaveImageTask(@NonNull EditImageActivity activity, String saveFilePath, TaskExecuteListener listener) {
+        super();
         mEditImageActReference = new WeakReference<>(activity);
         mSaveFilePath = saveFilePath;
+        mListener = listener;
     }
 
     @Override
@@ -70,8 +73,16 @@ public abstract class SaveImageTask extends AsyncTask<Bitmap, Void, Boolean> {
             ToastUtil.showShort("图片保存失败");
             return;
         }
-        onPostResult();
+
+        EditImageActivity activity = mEditImageActReference.get();
+        if (activity != null && !activity.isFinishing() && mListener != null) {
+            mListener.onPostExecute();
+        }
     }
 
-    public abstract void onPostResult();
+    public interface TaskExecuteListener {
+
+        void onPostExecute();
+    }
+
 }

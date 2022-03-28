@@ -19,9 +19,11 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
 import com.axiang.cropimagedemo.R;
+import com.axiang.cropimagedemo.editimg.crop.CropFragment;
 import com.axiang.cropimagedemo.editimg.sticker.StickerFragment;
 import com.axiang.cropimagedemo.util.FileUtil;
 import com.axiang.cropimagedemo.view.ScrollableViewPager;
+import com.axiang.cropimagedemo.view.crop.CropImageView;
 import com.axiang.cropimagedemo.view.imagezoom.ImageViewTouch;
 import com.axiang.cropimagedemo.view.sticker.StickerView;
 import com.bumptech.glide.Glide;
@@ -34,10 +36,11 @@ import java.lang.annotation.RetentionPolicy;
 public class EditImageActivity extends AppCompatActivity {
 
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef({Mode.NONE, Mode.STICKERS})
+    @IntDef({Mode.NONE, Mode.STICKERS, Mode.CROP})
     public @interface Mode {
         int NONE = 0;
         int STICKERS = 1;   // 贴图模式
+        int CROP = 2;   // 裁剪模式
     }
 
     public static final String INTENT_IMAGE_PATH = "image_path";
@@ -48,18 +51,22 @@ public class EditImageActivity extends AppCompatActivity {
     private TextView mTvApply;
 
     public ViewFlipper mViewFlipperSave;
-    public StickerView mStickerView;    // 贴图层 View
     public ImageViewTouch mMainImageView;
     public ScrollableViewPager mBottomOperateBar;  // 底部操作栏
 
-    public Bitmap mMainBitmap;  // 底层显示Bitmap
+    public Bitmap mMainBitmap;  // 底层显示 Bitmap
 
     private String mImagePath;    // 需要编辑的图片路径
     private String mSaveFilePath; // 保存新图片的路径
-    private SavePicTask mSavePicTask;
+    private SaveImageTask mSaveImageTask;
 
     public MainMenuFragment mMainMenuFragment;  // 底部操作栏 Fragment
+
     public StickerFragment mStickerFragment;    // 贴图 Fragment
+    public StickerView mStickerView;
+
+    public CropFragment mCropFragment; // 裁剪 Fragment
+    public CropImageView mCropImageView;
 
     public int mMode = Mode.NONE;  // 当前操作模式
 
@@ -93,6 +100,7 @@ public class EditImageActivity extends AppCompatActivity {
         mMainImageView = findViewById(R.id.view_main_image);
         mStickerView = findViewById(R.id.sticker_view);
         mBottomOperateBar = findViewById(R.id.vp_bottom_operate_bar);
+        mCropImageView = findViewById(R.id.crop_image_view);
 
         mViewFlipperSave.setInAnimation(this, R.anim.in_bottom_to_top);
         mViewFlipperSave.setOutAnimation(this, R.anim.out_bottom_to_top);
@@ -109,11 +117,13 @@ public class EditImageActivity extends AppCompatActivity {
     private void initFragments() {
         mMainMenuFragment = MainMenuFragment.newInstance();
         mStickerFragment = StickerFragment.newInstance();
+        mCropFragment = CropFragment.newInstance();
     }
 
     private void registerObserver() {
         getLifecycle().addObserver(mMainMenuFragment);
         getLifecycle().addObserver(mStickerFragment);
+        getLifecycle().addObserver(mCropFragment);
     }
 
     private void loadImage() {
@@ -139,6 +149,9 @@ public class EditImageActivity extends AppCompatActivity {
             case Mode.STICKERS:
                 mStickerFragment.applyStickers();
                 break;
+            case Mode.CROP:
+                mCropFragment.applyCropImage();
+                break;
         }
     }
 
@@ -150,12 +163,12 @@ public class EditImageActivity extends AppCompatActivity {
     }
 
     private void doSaveImage() {
-        if (mSavePicTask != null) {
-            mSavePicTask.cancel(true);
+        if (mSaveImageTask != null) {
+            mSaveImageTask.cancel(true);
         }
 
-        mSavePicTask = new SavePicTask(this, mSaveFilePath);
-        mSavePicTask.execute(mMainBitmap);
+        mSaveImageTask = new SaveImageTask(this, mSaveFilePath, this::backToMain);
+        mSaveImageTask.execute(mMainBitmap);
     }
 
     public void changeMainBitmap(Bitmap newBitmap) {
@@ -198,6 +211,8 @@ public class EditImageActivity extends AppCompatActivity {
         @Override
         public Fragment getItem(int position) {
             switch (position) {
+                case CropFragment.INDEX:
+                    return mCropFragment;
                 case StickerFragment.INDEX:
                     return mStickerFragment;
                 case MainMenuFragment.INDEX:
@@ -208,23 +223,7 @@ public class EditImageActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return 2;
-        }
-    }
-
-    private static class SavePicTask extends SaveImageTask {
-
-        public SavePicTask(@NonNull EditImageActivity activity, String saveFilePath) {
-            super(activity, saveFilePath);
-        }
-
-        @Override
-        public void onPostResult() {
-            EditImageActivity editImageActivity = mEditImageActReference.get();
-            if (editImageActivity == null || editImageActivity.isFinishing()) {
-                return;
-            }
-            editImageActivity.backToMain();
+            return 3;
         }
     }
 }

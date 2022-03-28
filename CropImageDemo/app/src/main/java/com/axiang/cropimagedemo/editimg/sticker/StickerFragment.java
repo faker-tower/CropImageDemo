@@ -19,7 +19,6 @@ import com.axiang.cropimagedemo.ModuleConfig;
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
-import com.axiang.cropimagedemo.editimg.StickerTask;
 import com.axiang.cropimagedemo.util.BitmapUtil;
 import com.axiang.cropimagedemo.view.sticker.StickerItem;
 
