@@ -125,7 +125,6 @@ public class CropFragment extends BaseEditImageFragment {
     public void onShow() {
         mActivity.mMode = EditImageActivity.Mode.CROP;
         mActivity.mCropImageView.setVisibility(View.VISIBLE);
-        mActivity.mMainImageView.setScaleEnabled(false);  // 禁用缩放
         mActivity.mViewFlipperSave.showNext();
 
         // 设置与屏幕匹配的尺寸，确保变换矩阵设置生效后才设置裁剪区域
@@ -143,7 +142,6 @@ public class CropFragment extends BaseEditImageFragment {
     public void backToMain() {
         mActivity.mMode = EditImageActivity.Mode.NONE;
         mActivity.mCropImageView.setVisibility(View.GONE);
-        mActivity.mMainImageView.setScaleEnabled(true); // 恢复缩放功能
         mActivity.mBottomOperateBar.setCurrentItem(0);
         if (mSelectedTextView != null) {
             mSelectedTextView.setTextColor(UNSELECTED_COLOR);
