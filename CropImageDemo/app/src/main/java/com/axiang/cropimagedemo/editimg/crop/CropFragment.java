@@ -105,7 +105,7 @@ public class CropFragment extends BaseEditImageFragment {
      */
     public void applyCropImage() {
         CropImageTask task = new CropImageTask(mActivity,
-                mActivity.mCropImageView.getCropRect(),
+                mActivity.mCropImageView.getCropRectF(),
                 mActivity.mMainImageView.getImageViewMatrix(),
                 this::onPostExecute);
         task.execute(mActivity.mMainBitmap);
@@ -117,7 +117,7 @@ public class CropFragment extends BaseEditImageFragment {
         }
 
         mActivity.changeMainBitmap(result);
-        mActivity.mCropImageView.setCropRect(mActivity.mMainImageView.getBitmapRect());
+        mActivity.mCropImageView.setCropRectF(mActivity.mMainImageView.getBitmapRect());
         backToMain();
     }
 
@@ -134,7 +134,7 @@ public class CropFragment extends BaseEditImageFragment {
             }
 
             RectF rectF = mActivity.mMainImageView.getBitmapRect();
-            mActivity.mCropImageView.setCropRect(rectF);
+            mActivity.mCropImageView.setCropRectF(rectF);
         });
     }
 
@@ -146,7 +146,7 @@ public class CropFragment extends BaseEditImageFragment {
         if (mSelectedTextView != null) {
             mSelectedTextView.setTextColor(UNSELECTED_COLOR);
         }
-        mActivity.mCropImageView.setRatioCropRect(mActivity.mMainImageView.getBitmapRect(), -1);
+        mActivity.mCropImageView.setRatioCropRectF(mActivity.mMainImageView.getBitmapRect(), -1);
         mActivity.mViewFlipperSave.showPrevious();
     }
 
@@ -162,7 +162,7 @@ public class CropFragment extends BaseEditImageFragment {
             mSelectedTextView = curTextView;
             mSelectedTextView.setTextColor(SELECTED_COLOR);
 
-            mActivity.mCropImageView.setRatioCropRect(mActivity.mMainImageView.getBitmapRect(),
+            mActivity.mCropImageView.setRatioCropRectF(mActivity.mMainImageView.getBitmapRect(),
                     dataItem.getRatio());
         }
     }
