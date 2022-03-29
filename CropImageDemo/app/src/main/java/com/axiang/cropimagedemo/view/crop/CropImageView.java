@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -18,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.axiang.cropimagedemo.R;
+import com.axiang.cropimagedemo.util.PaintUtil;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -35,28 +35,24 @@ public class CropImageView extends View {
     }
 
     private float mOldX, mOldY;
-    private int status = Status.IDLE;
-    private int selectedControllerCircle;
+    private int mCurrentStatus = Status.IDLE;
+    private int mSelectedControllerCircle;
 
-    private final RectF backUpRect = new RectF(); // 上
-    private final RectF backLeftRect = new RectF();   // 左
-    private final RectF backRightRect = new RectF();  // 右
-    private final RectF backDownRect = new RectF();   // 下
+    private final RectF mCropRect = new RectF();// 剪切矩形
 
-    private final RectF cropRect = new RectF();// 剪切矩形
+    private Bitmap mCircleBit;
+    private final Rect mCircleRect = new Rect();
+    private RectF mLeftTopCircleRect;
+    private RectF mRightTopCircleRect;
+    private RectF mLeftBottomRect;
+    private RectF mRightBottomRect;
 
-    private Paint mBackgroundPaint;// 背景Paint
-    private Bitmap circleBit;
-    private final Rect circleRect = new Rect();
-    private RectF leftTopCircleRect;
-    private RectF rightTopCircleRect;
-    private RectF leftBottomRect;
-    private RectF rightBottomRect;
+    private Paint mHelpLinePaint;   // 辅助线 Paint
 
-    private final RectF imageRect = new RectF();    // 存贮图片位置信息
-    private final RectF tempRect = new RectF(); // 临时存贮矩形数据
+    private final RectF mImageRect = new RectF();    // 存贮图片位置信息
+    private final RectF mTempRect = new RectF(); // 临时存贮矩形数据
 
-    private float ratio = -1;// 剪裁缩放比率
+    private float mRatio = -1;// 剪裁缩放比率
 
     public CropImageView(Context context) {
         super(context);
@@ -74,15 +70,14 @@ public class CropImageView extends View {
     }
 
     private void init(@NonNull Context context) {
-        circleBit = BitmapFactory.decodeResource(context.getResources(), R.drawable.sticker_rotate);
-        circleRect.set(0, 0, circleBit.getWidth(), circleBit.getHeight());
-        leftTopCircleRect = new RectF(0, 0, CIRCLE_WIDTH, CIRCLE_WIDTH);
-        rightTopCircleRect = new RectF(leftTopCircleRect);
-        leftBottomRect = new RectF(leftTopCircleRect);
-        rightBottomRect = new RectF(leftTopCircleRect);
+        mCircleBit = BitmapFactory.decodeResource(context.getResources(), R.drawable.sticker_rotate);
+        mCircleRect.set(0, 0, mCircleBit.getWidth(), mCircleBit.getHeight());
+        mLeftTopCircleRect = new RectF(0, 0, CIRCLE_WIDTH, CIRCLE_WIDTH);
+        mRightTopCircleRect = new RectF(mLeftTopCircleRect);
+        mLeftBottomRect = new RectF(mLeftTopCircleRect);
+        mRightBottomRect = new RectF(mLeftTopCircleRect);
 
-        mBackgroundPaint = new Paint();
-        mBackgroundPaint.setColor(Color.parseColor("#B0000000"));
+        mHelpLinePaint = PaintUtil.newHelpLinePaint();
     }
 
     /**
@@ -93,72 +88,34 @@ public class CropImageView extends View {
             return;
         }
 
-        imageRect.set(rect);
-        cropRect.set(rect);
-        scaleRect(cropRect, 0.5f, 0.5f);
+        mImageRect.set(rect);
+        mCropRect.set(rect);
+        scaleRect(mCropRect, 0.5f, 0.5f);
         invalidate();
     }
 
     public void setRatioCropRect(RectF rect, float r) {
-        this.ratio = r;
+        this.mRatio = r;
         if (r < 0) {
             setCropRect(rect);
             return;
         }
 
-        imageRect.set(rect);
-        cropRect.set(rect);
+        mImageRect.set(rect);
+        mCropRect.set(rect);
 
         float h, w;
-        if (cropRect.width() >= cropRect.height()) {
-            h = cropRect.height() / 2;
-            w = this.ratio * h;
+        if (mCropRect.width() >= mCropRect.height()) {
+            h = mCropRect.height() / 2;
+            w = this.mRatio * h;
         } else {
             w = rect.width() / 2;
-            h = w / this.ratio;
+            h = w / this.mRatio;
         }
-        float scaleX = w / cropRect.width();
-        float scaleY = h / cropRect.height();
-        scaleRect(cropRect, scaleX, scaleY);
+        float scaleX = w / mCropRect.width();
+        float scaleY = h / mCropRect.height();
+        scaleRect(mCropRect, scaleX, scaleY);
         invalidate();
-    }
-
-    @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
-
-        int w = getWidth();
-        int h = getHeight();
-        if (w <= 0 || h <= 0) {
-            return;
-        }
-
-        // 绘制黑色背景
-        backUpRect.set(0, 0, w, cropRect.top);
-        backLeftRect.set(0, cropRect.top, cropRect.left, cropRect.bottom);
-        backRightRect.set(cropRect.right, cropRect.top, w, cropRect.bottom);
-        backDownRect.set(0, cropRect.bottom, w, h);
-
-        canvas.drawRect(backUpRect, mBackgroundPaint);
-        canvas.drawRect(backLeftRect, mBackgroundPaint);
-        canvas.drawRect(backRightRect, mBackgroundPaint);
-        canvas.drawRect(backDownRect, mBackgroundPaint);
-
-        // 绘制四个控制点
-        int radius = CIRCLE_WIDTH >> 1;
-        leftTopCircleRect.set(cropRect.left - radius, cropRect.top - radius,
-                cropRect.left + radius, cropRect.top + radius);
-        rightTopCircleRect.set(cropRect.right - radius, cropRect.top - radius,
-                cropRect.right + radius, cropRect.top + radius);
-        leftBottomRect.set(cropRect.left - radius, cropRect.bottom - radius,
-                cropRect.left + radius, cropRect.bottom + radius);
-        rightBottomRect.set(cropRect.right - radius, cropRect.bottom - radius,
-                cropRect.right + radius, cropRect.bottom + radius);
-
-        canvas.drawBitmap(circleBit, circleRect, leftTopCircleRect, null);
-        canvas.drawBitmap(circleBit, circleRect, rightTopCircleRect, null);
-        canvas.drawBitmap(circleBit, circleRect, leftBottomRect, null);
-        canvas.drawBitmap(circleBit, circleRect, rightBottomRect, null);
     }
 
     /**
@@ -176,23 +133,23 @@ public class CropImageView extends View {
                 int selectCircle = isSelectedControllerCircle(x, y);
                 if (selectCircle > 0) { // 选择控制点
                     ret = true;
-                    selectedControllerCircle = selectCircle; // 记录选中控制点编号
-                    status = Status.SCALE;  // 进入缩放状态
-                } else if (cropRect.contains(x, y)) {   // 选择缩放框内部
+                    mSelectedControllerCircle = selectCircle; // 记录选中控制点编号
+                    mCurrentStatus = Status.SCALE;  // 进入缩放状态
+                } else if (mCropRect.contains(x, y)) {   // 选择缩放框内部
                     ret = true;
-                    status = Status.MOVE;   // 进入移动状态
+                    mCurrentStatus = Status.MOVE;   // 进入移动状态
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (status == Status.SCALE) {   // 缩放控制
+                if (mCurrentStatus == Status.SCALE) {   // 缩放控制
                     scaleCropController(x, y);
-                } else if (status == Status.MOVE) { // 移动控制
+                } else if (mCurrentStatus == Status.MOVE) { // 移动控制
                     translateCrop(x - mOldX, y - mOldY);
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-                status = Status.IDLE;   // 回归空闲状态
+                mCurrentStatus = Status.IDLE;   // 回归空闲状态
                 break;
         }
 
@@ -203,29 +160,62 @@ public class CropImageView extends View {
         return ret;
     }
 
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        int w = getWidth();
+        int h = getHeight();
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+
+        // 绘制辅助线
+        canvas.drawRect(mCropRect.left,
+                mCropRect.top,
+                mCropRect.right,
+                mCropRect.bottom,
+                mHelpLinePaint);
+
+        // 绘制四个控制点
+        int radius = CIRCLE_WIDTH >> 1;
+        mLeftTopCircleRect.set(mCropRect.left - radius, mCropRect.top - radius,
+                mCropRect.left + radius, mCropRect.top + radius);
+        mRightTopCircleRect.set(mCropRect.right - radius, mCropRect.top - radius,
+                mCropRect.right + radius, mCropRect.top + radius);
+        mLeftBottomRect.set(mCropRect.left - radius, mCropRect.bottom - radius,
+                mCropRect.left + radius, mCropRect.bottom + radius);
+        mRightBottomRect.set(mCropRect.right - radius, mCropRect.bottom - radius,
+                mCropRect.right + radius, mCropRect.bottom + radius);
+
+        canvas.drawBitmap(mCircleBit, mCircleRect, mLeftTopCircleRect, null);
+        canvas.drawBitmap(mCircleBit, mCircleRect, mRightTopCircleRect, null);
+        canvas.drawBitmap(mCircleBit, mCircleRect, mLeftBottomRect, null);
+        canvas.drawBitmap(mCircleBit, mCircleRect, mRightBottomRect, null);
+    }
+
     /**
      * 移动剪切框
      */
     private void translateCrop(float dx, float dy) {
-        tempRect.set(cropRect); // 存贮原有数据，以便还原
+        mTempRect.set(mCropRect); // 存贮原有数据，以便还原
 
-        translateRect(cropRect, dx, dy);
+        translateRect(mCropRect, dx, dy);
         // 边界判定算法优化
-        float mdLeft = imageRect.left - cropRect.left;
+        float mdLeft = mImageRect.left - mCropRect.left;
         if (mdLeft > 0) {
-            translateRect(cropRect, mdLeft, 0);
+            translateRect(mCropRect, mdLeft, 0);
         }
-        float mdRight = imageRect.right - cropRect.right;
+        float mdRight = mImageRect.right - mCropRect.right;
         if (mdRight < 0) {
-            translateRect(cropRect, mdRight, 0);
+            translateRect(mCropRect, mdRight, 0);
         }
-        float mdTop = imageRect.top - cropRect.top;
+        float mdTop = mImageRect.top - mCropRect.top;
         if (mdTop > 0) {
-            translateRect(cropRect, 0, mdTop);
+            translateRect(mCropRect, 0, mdTop);
         }
-        float mdBottom = imageRect.bottom - cropRect.bottom;
+        float mdBottom = mImageRect.bottom - mCropRect.bottom;
         if (mdBottom < 0) {
-            translateRect(cropRect, 0, mdBottom);
+            translateRect(mCropRect, 0, mdBottom);
         }
 
         this.invalidate();
@@ -245,27 +235,27 @@ public class CropImageView extends View {
      * 操作控制点 控制缩放
      */
     private void scaleCropController(float x, float y) {
-        tempRect.set(cropRect); // 存贮原有数据，以便还原
-        switch (selectedControllerCircle) {
+        mTempRect.set(mCropRect); // 存贮原有数据，以便还原
+        switch (mSelectedControllerCircle) {
             case 1: // 左上角控制点
-                cropRect.left = x;
-                cropRect.top = y;
+                mCropRect.left = x;
+                mCropRect.top = y;
                 break;
             case 2: // 右上角控制点
-                cropRect.right = x;
-                cropRect.top = y;
+                mCropRect.right = x;
+                mCropRect.top = y;
                 break;
             case 3: // 左下角控制点
-                cropRect.left = x;
-                cropRect.bottom = y;
+                mCropRect.left = x;
+                mCropRect.bottom = y;
                 break;
             case 4: // 右下角控制点
-                cropRect.right = x;
-                cropRect.bottom = y;
+                mCropRect.right = x;
+                mCropRect.bottom = y;
                 break;
         }
 
-        if (ratio < 0) {    // 任意缩放比
+        if (mRatio < 0) {    // 任意缩放比
             // 边界条件检测
             validateCropRect();
             invalidate();
@@ -273,24 +263,24 @@ public class CropImageView extends View {
         }
 
         // 更新剪切矩形长宽，确定不变点
-        switch (selectedControllerCircle) {
+        switch (mSelectedControllerCircle) {
             case 1: // 左上角控制点
             case 2: // 右上角控制点
-                cropRect.top = cropRect.bottom - (cropRect.right - cropRect.left) / this.ratio;
+                mCropRect.top = mCropRect.bottom - (mCropRect.right - mCropRect.left) / this.mRatio;
                 break;
             case 3: // 左下角控制点
             case 4: // 右下角控制点
-                cropRect.bottom = (cropRect.right - cropRect.left) / this.ratio + cropRect.top;
+                mCropRect.bottom = (mCropRect.right - mCropRect.left) / this.mRatio + mCropRect.top;
                 break;
         }
 
-        if (cropRect.left < imageRect.left
-                || cropRect.right > imageRect.right
-                || cropRect.top < imageRect.top
-                || cropRect.bottom > imageRect.bottom
-                || cropRect.width() < CIRCLE_WIDTH
-                || cropRect.height() < CIRCLE_WIDTH) {
-            cropRect.set(tempRect);
+        if (mCropRect.left < mImageRect.left
+                || mCropRect.right > mImageRect.right
+                || mCropRect.top < mImageRect.top
+                || mCropRect.bottom > mImageRect.bottom
+                || mCropRect.width() < CIRCLE_WIDTH
+                || mCropRect.height() < CIRCLE_WIDTH) {
+            mCropRect.set(mTempRect);
         }
         invalidate();
     }
@@ -299,25 +289,25 @@ public class CropImageView extends View {
      * 边界条件检测
      */
     private void validateCropRect() {
-        if (cropRect.width() < CIRCLE_WIDTH) {
-            cropRect.left = tempRect.left;
-            cropRect.right = tempRect.right;
+        if (mCropRect.width() < CIRCLE_WIDTH) {
+            mCropRect.left = mTempRect.left;
+            mCropRect.right = mTempRect.right;
         }
-        if (cropRect.height() < CIRCLE_WIDTH) {
-            cropRect.top = tempRect.top;
-            cropRect.bottom = tempRect.bottom;
+        if (mCropRect.height() < CIRCLE_WIDTH) {
+            mCropRect.top = mTempRect.top;
+            mCropRect.bottom = mTempRect.bottom;
         }
-        if (cropRect.left < imageRect.left) {
-            cropRect.left = imageRect.left;
+        if (mCropRect.left < mImageRect.left) {
+            mCropRect.left = mImageRect.left;
         }
-        if (cropRect.right > imageRect.right) {
-            cropRect.right = imageRect.right;
+        if (mCropRect.right > mImageRect.right) {
+            mCropRect.right = mImageRect.right;
         }
-        if (cropRect.top < imageRect.top) {
-            cropRect.top = imageRect.top;
+        if (mCropRect.top < mImageRect.top) {
+            mCropRect.top = mImageRect.top;
         }
-        if (cropRect.bottom > imageRect.bottom) {
-            cropRect.bottom = imageRect.bottom;
+        if (mCropRect.bottom > mImageRect.bottom) {
+            mCropRect.bottom = mImageRect.bottom;
         }
     }
 
@@ -325,16 +315,16 @@ public class CropImageView extends View {
      * 是否选中控制点，-1为没有
      */
     private int isSelectedControllerCircle(float x, float y) {
-        if (leftTopCircleRect.contains(x, y)) {   // 选中左上角
+        if (mLeftTopCircleRect.contains(x, y)) {   // 选中左上角
             return 1;
         }
-        if (rightTopCircleRect.contains(x, y)) {  // 选中右上角
+        if (mRightTopCircleRect.contains(x, y)) {  // 选中右上角
             return 2;
         }
-        if (leftBottomRect.contains(x, y)) {  // 选中左下角
+        if (mLeftBottomRect.contains(x, y)) {  // 选中左下角
             return 3;
         }
-        if (rightBottomRect.contains(x, y)) { // 选中右下角
+        if (mRightBottomRect.contains(x, y)) { // 选中右下角
             return 4;
         }
         return -1;
@@ -349,7 +339,7 @@ public class CropImageView extends View {
      * 返回剪切矩形
      */
     public RectF getCropRect() {
-        return new RectF(this.cropRect);
+        return new RectF(this.mCropRect);
     }
 
     /**

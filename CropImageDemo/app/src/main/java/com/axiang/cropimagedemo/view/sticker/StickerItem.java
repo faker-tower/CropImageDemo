@@ -4,10 +4,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
@@ -15,6 +13,7 @@ import android.view.View;
 
 import com.axiang.cropimagedemo.Constants;
 import com.axiang.cropimagedemo.R;
+import com.axiang.cropimagedemo.util.PaintUtil;
 import com.axiang.cropimagedemo.util.RectUtil;
 
 public class StickerItem {
@@ -50,10 +49,7 @@ public class StickerItem {
     public RectF mDetectDeleteRect;
 
     public StickerItem(Context context) {
-        mHelpBoxPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mHelpBoxPaint.setColor(Color.BLACK);
-        mHelpBoxPaint.setStyle(Style.STROKE);
-        mHelpBoxPaint.setStrokeWidth(4);
+        mHelpBoxPaint = PaintUtil.newHelpLinePaint();
 
         // 导入工具按钮位图
         if (mDeleteBitmap == null) {
