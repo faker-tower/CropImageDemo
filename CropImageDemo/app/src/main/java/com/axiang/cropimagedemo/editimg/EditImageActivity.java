@@ -25,6 +25,7 @@ import com.axiang.cropimagedemo.util.FileUtil;
 import com.axiang.cropimagedemo.view.ScrollableViewPager;
 import com.axiang.cropimagedemo.view.crop.CropImageView;
 import com.axiang.cropimagedemo.view.imagezoom.ImageViewTouch;
+import com.axiang.cropimagedemo.view.imagezoom.ImageViewTouchBase;
 import com.axiang.cropimagedemo.view.sticker.StickerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
@@ -177,7 +178,9 @@ public class EditImageActivity extends AppCompatActivity {
         }
 
         mMainBitmap = newBitmap;
-        Glide.with(this).load(mMainBitmap).fitCenter().into(mMainImageView);
+        // Glide是异步的，这里不适用，改用 setImageBitmap
+        mMainImageView.setImageBitmap(mMainBitmap);
+        mMainImageView.setDisplayType(ImageViewTouchBase.DisplayType.FIT_TO_SCREEN);
     }
 
     /**
