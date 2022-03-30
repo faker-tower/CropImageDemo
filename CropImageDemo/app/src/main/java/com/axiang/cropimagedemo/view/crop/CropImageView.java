@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.util.PaintUtil;
+import com.axiang.cropimagedemo.util.RectUtil;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -132,22 +133,10 @@ public class CropImageView extends View {
         mSelectedCircle.updateCropRectF(mCropRectF, x, y);   // 更新裁剪框位置
 
         if (mRatio < 0) {    // 任意缩放比
-            // 边界条件检测
-            validateCropRectF();
-            invalidate();
-            return;
-        }
-
-        // 更新裁剪框矩阵长宽，保证裁剪框比例
-        mSelectedCircle.updateCropRectFWithRadio(mCropRectF, mRatio);
-
-        if (mCropRectF.left < mMainImageRect.left
-                || mCropRectF.right > mMainImageRect.right
-                || mCropRectF.top < mMainImageRect.top
-                || mCropRectF.bottom > mMainImageRect.bottom
-                || mCropRectF.width() < CIRCLE_WIDTH * 2
-                || mCropRectF.height() < CIRCLE_WIDTH * 2) {
-            mCropRectF.set(mTempCropRect);
+            validateCropRectF();    // // 边界条件检测
+        } else {
+            updateCropRectFWithRadio();   // 按照裁剪框的比例去裁剪框矩阵长宽
+            validateCropRectFWithRadio();   // // 边界条件检测 按比例
         }
         invalidate();
     }
@@ -175,6 +164,71 @@ public class CropImageView extends View {
         }
         if (mCropRectF.bottom > mMainImageRect.bottom) {    // 不能超出下边界
             mCropRectF.bottom = mMainImageRect.bottom;
+        }
+    }
+
+    /**
+     * 按照裁剪框的比例去裁剪框矩阵长宽
+     */
+    private void updateCropRectFWithRadio() {
+        switch (mSelectedCircle) {
+            case LEFT_TOP:  // 左上点
+            case RIGHT_TOP: // 右上点
+                mCropRectF.top = mCropRectF.bottom - (mCropRectF.right - mCropRectF.left) / mRatio;
+                break;
+            case LEFT_BOTTOM:   // 左下点
+            case RIGHT_BOTTOM:  // 右下点
+                mCropRectF.bottom = mCropRectF.top + (mCropRectF.right - mCropRectF.left) / mRatio;
+                break;
+            case LEFT_CENTER_TOP:   // 左上中点
+            case BOTTOM_CENTER_BOTTOM:  // // 底下中点
+                float widthHalfDiff = ((mCropRectF.bottom - mCropRectF.top) * mRatio - mCropRectF.width()) / 2;
+                mCropRectF.left -= widthHalfDiff;
+                mCropRectF.right += widthHalfDiff;
+                break;
+            case LEFT_CENTER_BOTTOM:    // 左下中点
+            case RIGHT_CENTER_BOTTOM:   // 右下中点
+                float heightHalfDiff = ((mCropRectF.right - mCropRectF.left) / mRatio - mCropRectF.height()) / 2;
+                mCropRectF.top -= heightHalfDiff;
+                mCropRectF.bottom += heightHalfDiff;
+                break;
+        }
+
+    }
+
+    /**
+     * 边界条件检测 按比例
+     */
+    private void validateCropRectFWithRadio() {
+        if (mCropRectF.width() < CIRCLE_WIDTH * 2) { // 限制最小裁剪框宽度
+            mCropRectF.set(mTempCropRect);
+        }
+        if (mCropRectF.height() < CIRCLE_WIDTH * 2) { // 限制最小裁剪框高度
+            mCropRectF.set(mTempCropRect);
+        }
+
+        if (mCropRectF.left < mMainImageRect.left) {    // 不能超出左边界
+            mCropRectF.right += mMainImageRect.left - mCropRectF.left;
+            mCropRectF.left = mMainImageRect.left;
+        }
+        if (mCropRectF.right > mMainImageRect.right) {  // 不能超出右边界
+            mCropRectF.left -= mCropRectF.right - mMainImageRect.right;
+            mCropRectF.right = mMainImageRect.right;
+        }
+        if (mCropRectF.left < mMainImageRect.left || mCropRectF.right > mMainImageRect.right) { // 调整后不能超出左右边界
+            mCropRectF.set(mTempCropRect);
+        }
+
+        if (mCropRectF.top < mMainImageRect.top) {  // 不能超出上边界
+            mCropRectF.bottom += mMainImageRect.top - mCropRectF.top;
+            mCropRectF.top = mMainImageRect.top;
+        }
+        if (mCropRectF.bottom > mMainImageRect.bottom) {    // 不能超出下边界
+            mCropRectF.top -= mCropRectF.bottom - mMainImageRect.bottom;
+            mCropRectF.bottom = mMainImageRect.bottom;
+        }
+        if (mCropRectF.top < mMainImageRect.top || mCropRectF.bottom > mMainImageRect.bottom) { // 调整后不能超出上下边界
+            mCropRectF.set(mTempCropRect);
         }
     }
 
@@ -258,7 +312,7 @@ public class CropImageView extends View {
         }
         float scaleX = width / mCropRectF.width();
         float scaleY = height / mCropRectF.height();
-        scaleRectF(mCropRectF, scaleX, scaleY);
+        RectUtil.scaleRect(mCropRectF, scaleX, scaleY);
         invalidate();
     }
 
@@ -272,27 +326,8 @@ public class CropImageView extends View {
 
         mMainImageRect.set(rectF);
         mCropRectF.set(rectF);
-        scaleRectF(mCropRectF, 0.5f, 0.5f);
+        RectUtil.scaleRect(mCropRectF, 0.5f, 0.5f);
         invalidate();
-    }
-
-    /**
-     * 缩放矩阵
-     */
-    private void scaleRectF(RectF rectF, float scaleX, float scaleY) {
-        float oldWidth = rectF.width();
-        float oldHeight = rectF.height();
-
-        float newWidth = scaleX * oldWidth;
-        float newHeight = scaleY * oldHeight;
-
-        float dx = (newWidth - oldWidth) / 2;
-        float dy = (newHeight - oldHeight) / 2;
-
-        rectF.left -= dx;
-        rectF.top -= dy;
-        rectF.right += dx;
-        rectF.bottom += dy;
     }
 
     /**
@@ -302,14 +337,13 @@ public class CropImageView extends View {
         return new RectF(mCropRectF);
     }
 
+    /**
+     * 圆点 enum
+     */
     enum Circle {
         NONE {
             @Override
             public void updateCropRectF(RectF cropRect, float x, float y) {
-            }
-
-            @Override
-            public void updateCropRectFWithRadio(RectF cropRect, float ratio) {
             }
 
             @Override
@@ -322,11 +356,6 @@ public class CropImageView extends View {
             public void updateCropRectF(RectF cropRect, float x, float y) {
                 cropRect.left = x;
                 cropRect.top = y;
-            }
-
-            @Override
-            public void updateCropRectFWithRadio(RectF cropRect, float ratio) {
-                cropRect.top = cropRect.bottom - (cropRect.right - cropRect.left) / ratio;
             }
 
             @Override
@@ -344,11 +373,6 @@ public class CropImageView extends View {
             }
 
             @Override
-            public void updateCropRectFWithRadio(RectF cropRect, float ratio) {
-                cropRect.top = cropRect.bottom - (cropRect.right - cropRect.left) / ratio;
-            }
-
-            @Override
             public void updateCircleRectF(RectF cropRect, float halfCircleWidth) {
                 setCircleRectF(cropRect.right - halfCircleWidth, cropRect.top - halfCircleWidth,
                         cropRect.right + halfCircleWidth, cropRect.top + halfCircleWidth);
@@ -360,11 +384,6 @@ public class CropImageView extends View {
             public void updateCropRectF(RectF cropRect, float x, float y) {
                 cropRect.left = x;
                 cropRect.bottom = y;
-            }
-
-            @Override
-            public void updateCropRectFWithRadio(RectF cropRect, float ratio) {
-                cropRect.bottom = cropRect.top + (cropRect.right - cropRect.left) / ratio;
             }
 
             @Override
@@ -382,11 +401,6 @@ public class CropImageView extends View {
             }
 
             @Override
-            public void updateCropRectFWithRadio(RectF cropRect, float ratio) {
-                cropRect.bottom = cropRect.top + (cropRect.right - cropRect.left) / ratio;
-            }
-
-            @Override
             public void updateCircleRectF(RectF cropRect, float halfCircleWidth) {
                 setCircleRectF(cropRect.right - halfCircleWidth, cropRect.bottom - halfCircleWidth,
                         cropRect.right + halfCircleWidth, cropRect.bottom + halfCircleWidth);
@@ -397,13 +411,6 @@ public class CropImageView extends View {
             @Override
             public void updateCropRectF(RectF cropRect, float x, float y) {
                 cropRect.top = y;
-            }
-
-            @Override
-            public void updateCropRectFWithRadio(RectF cropRect, float ratio) {
-                float half = (cropRect.bottom - cropRect.top) / ratio / 2;
-                cropRect.left -= half;
-                cropRect.right += half;
             }
 
             @Override
@@ -420,13 +427,6 @@ public class CropImageView extends View {
             }
 
             @Override
-            public void updateCropRectFWithRadio(RectF cropRect, float ratio) {
-                float half = (cropRect.right - cropRect.left) / ratio / 2;
-                cropRect.top -= half;
-                cropRect.bottom += half;
-            }
-
-            @Override
             public void updateCircleRectF(RectF cropRect, float halfCircleWidth) {
                 setCircleRectF(cropRect.left - halfCircleWidth, cropRect.centerY() - halfCircleWidth,
                         cropRect.left + halfCircleWidth, cropRect.centerY() + halfCircleWidth);
@@ -440,13 +440,6 @@ public class CropImageView extends View {
             }
 
             @Override
-            public void updateCropRectFWithRadio(RectF cropRect, float ratio) {
-                float half = (cropRect.right - cropRect.left) / ratio / 2;
-                cropRect.top -= half;
-                cropRect.bottom += half;
-            }
-
-            @Override
             public void updateCircleRectF(RectF cropRect, float halfCircleWidth) {
                 setCircleRectF(cropRect.right - halfCircleWidth, cropRect.centerY() - halfCircleWidth,
                         cropRect.right + halfCircleWidth, cropRect.centerY() + halfCircleWidth);
@@ -457,13 +450,6 @@ public class CropImageView extends View {
             @Override
             public void updateCropRectF(RectF cropRect, float x, float y) {
                 cropRect.bottom = y;
-            }
-
-            @Override
-            public void updateCropRectFWithRadio(RectF cropRect, float ratio) {
-                float half = (cropRect.bottom - cropRect.top) / ratio / 2;
-                cropRect.left -= half;
-                cropRect.right += half;
             }
 
             @Override
@@ -491,11 +477,6 @@ public class CropImageView extends View {
          * 更新 CropRectF 位置
          */
         public abstract void updateCropRectF(RectF cropRect, float x, float y);
-
-        /**
-         * 按比例去更新 CropRectF 位置
-         */
-        public abstract void updateCropRectFWithRadio(RectF cropRect, float ratio);
 
         /**
          * 通过 CropRectF 来更新 CircleRectF 位置

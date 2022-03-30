@@ -146,7 +146,7 @@ public class StickerItem {
         }
 
         mStickerMatrix.postScale(scale, scale, mDstRect.centerX(), mDstRect.centerY());    // 存入scale矩阵
-        RectUtil.scaleRect(mDstRect, scale);    // 缩放目标矩形
+        RectUtil.scaleRect(mDstRect, scale, scale); // 缩放目标矩形
 
         // 重新计算工具箱坐标
         mHelpBox.set(mDstRect);

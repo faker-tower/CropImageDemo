@@ -9,12 +9,12 @@ public class RectUtil {
     /**
      * 缩放指定矩形
      */
-    public static void scaleRect(RectF rect, float scale) {
+    public static void scaleRect(RectF rect, float scaleX, float scaleY) {
         float w = rect.width();
         float h = rect.height();
 
-        float newW = scale * w;
-        float newH = scale * h;
+        float newW = scaleX * w;
+        float newH = scaleY * h;
 
         float dx = (newW - w) / 2;
         float dy = (newH - h) / 2;
