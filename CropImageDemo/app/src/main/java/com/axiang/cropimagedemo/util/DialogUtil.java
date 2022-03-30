@@ -5,6 +5,9 @@ import android.app.ProgressDialog;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentManager;
+
+import com.axiang.cropimagedemo.widget.ColorPickerDialog;
 
 public class DialogUtil {
 
@@ -17,5 +20,13 @@ public class DialogUtil {
 
     public static Dialog newSaveFileDialog(@NonNull Context context) {
         return newLoadingDialog(context, "图片保存中...", false);
+    }
+
+    public static void showColorPickerDialog(@NonNull FragmentManager fragmentManager,
+                                             int red,
+                                             int green,
+                                             int blue,
+                                             ColorPickerDialog.OnSelectListener onSelectListener) {
+        ColorPickerDialog.show(fragmentManager, red, green, blue, onSelectListener);
     }
 }

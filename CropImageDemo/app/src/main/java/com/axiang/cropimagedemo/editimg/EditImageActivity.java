@@ -21,12 +21,14 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.crop.CropFragment;
 import com.axiang.cropimagedemo.editimg.sticker.StickerFragment;
+import com.axiang.cropimagedemo.editimg.text.TextStickerFragment;
 import com.axiang.cropimagedemo.util.FileUtil;
 import com.axiang.cropimagedemo.view.ScrollableViewPager;
 import com.axiang.cropimagedemo.view.crop.CropImageView;
 import com.axiang.cropimagedemo.view.imagezoom.ImageViewTouch;
 import com.axiang.cropimagedemo.view.imagezoom.ImageViewTouchBase;
 import com.axiang.cropimagedemo.view.sticker.StickerView;
+import com.axiang.cropimagedemo.view.text_sticker.TextStickerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -37,11 +39,12 @@ import java.lang.annotation.RetentionPolicy;
 public class EditImageActivity extends AppCompatActivity {
 
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef({Mode.NONE, Mode.STICKERS, Mode.CROP})
+    @IntDef({Mode.NONE, Mode.STICKERS, Mode.CROP, Mode.TEXT})
     public @interface Mode {
         int NONE = 0;
         int STICKERS = 1;   // 贴图模式
         int CROP = 2;   // 裁剪模式
+        int TEXT = 3;   // 文字
     }
 
     public static final String INTENT_IMAGE_PATH = "image_path";
@@ -68,6 +71,9 @@ public class EditImageActivity extends AppCompatActivity {
 
     public CropFragment mCropFragment; // 裁剪 Fragment
     public CropImageView mCropImageView;
+
+    public TextStickerFragment mTextStickerFragment;    // 文字 Fragment
+    public TextStickerView mTextStickerView;    // 文字贴图
 
     public int mMode = Mode.NONE;  // 当前操作模式
 
@@ -102,6 +108,7 @@ public class EditImageActivity extends AppCompatActivity {
         mStickerView = findViewById(R.id.sticker_view);
         mBottomOperateBar = findViewById(R.id.vp_bottom_operate_bar);
         mCropImageView = findViewById(R.id.crop_image_view);
+        mTextStickerView = findViewById(R.id.text_sticker_view);
 
         mViewFlipperSave.setInAnimation(this, R.anim.in_bottom_to_top);
         mViewFlipperSave.setOutAnimation(this, R.anim.out_bottom_to_top);
@@ -119,12 +126,14 @@ public class EditImageActivity extends AppCompatActivity {
         mMainMenuFragment = MainMenuFragment.newInstance();
         mStickerFragment = StickerFragment.newInstance();
         mCropFragment = CropFragment.newInstance();
+        mTextStickerFragment = TextStickerFragment.newInstance();
     }
 
     private void registerObserver() {
         getLifecycle().addObserver(mMainMenuFragment);
         getLifecycle().addObserver(mStickerFragment);
         getLifecycle().addObserver(mCropFragment);
+        getLifecycle().addObserver(mTextStickerFragment);
     }
 
     private void loadImage() {
@@ -152,6 +161,9 @@ public class EditImageActivity extends AppCompatActivity {
                 break;
             case Mode.CROP:
                 mCropFragment.applyCropImage();
+                break;
+            case Mode.TEXT:
+                mTextStickerFragment.applyCropImage();
                 break;
         }
     }
@@ -214,6 +226,8 @@ public class EditImageActivity extends AppCompatActivity {
         @Override
         public Fragment getItem(int position) {
             switch (position) {
+                case TextStickerFragment.INDEX:
+                    return mTextStickerFragment;
                 case CropFragment.INDEX:
                     return mCropFragment;
                 case StickerFragment.INDEX:
@@ -226,7 +240,7 @@ public class EditImageActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return 3;
+            return 4;
         }
     }
 }

@@ -182,13 +182,13 @@ public class CropImageView extends View {
                 break;
             case LEFT_CENTER_TOP:   // 左上中点
             case BOTTOM_CENTER_BOTTOM:  // // 底下中点
-                float widthHalfDiff = ((mCropRectF.bottom - mCropRectF.top) * mRatio - mCropRectF.width()) / 2;
+                float widthHalfDiff = ((mCropRectF.bottom - mCropRectF.top) * mRatio - mCropRectF.width()) / 2f;
                 mCropRectF.left -= widthHalfDiff;
                 mCropRectF.right += widthHalfDiff;
                 break;
             case LEFT_CENTER_BOTTOM:    // 左下中点
             case RIGHT_CENTER_BOTTOM:   // 右下中点
-                float heightHalfDiff = ((mCropRectF.right - mCropRectF.left) / mRatio - mCropRectF.height()) / 2;
+                float heightHalfDiff = ((mCropRectF.right - mCropRectF.left) / mRatio - mCropRectF.height()) / 2f;
                 mCropRectF.top -= heightHalfDiff;
                 mCropRectF.bottom += heightHalfDiff;
                 break;

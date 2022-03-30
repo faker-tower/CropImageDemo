@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <View
+        android:id="@+id/view_color_preview"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:elevation="2dp" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tv_red_color_tip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@android:color/holo_red_light"
+            android:textSize="17sp" />
+
+        <SeekBar
+            android:id="@+id/seekbar_red"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_red_color_tip"
+            android:max="255"
+            android:maxHeight="3dp"
+            android:minHeight="3dp"
+            android:progressDrawable="@drawable/seekbar_text_selector_red"
+            android:thumbTint="@android:color/holo_red_light" />
+
+        <TextView
+            android:id="@+id/tv_green_color_tip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/seekbar_red"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@android:color/holo_green_light"
+            android:textSize="17sp" />
+
+        <SeekBar
+            android:id="@+id/seekbar_green"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_green_color_tip"
+            android:max="255"
+            android:maxHeight="3dp"
+            android:minHeight="3dp"
+            android:progressDrawable="@drawable/seekbar_text_selector_green"
+            android:thumbTint="@android:color/holo_green_light" />
+
+        <TextView
+            android:id="@+id/tv_blue_color_tip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/seekbar_green"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@android:color/holo_blue_light"
+            android:textSize="17sp" />
+
+        <SeekBar
+            android:id="@+id/seekbar_blue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_blue_color_tip"
+            android:max="255"
+            android:maxHeight="3dp"
+            android:minHeight="3dp"
+            android:progressDrawable="@drawable/seekbar_text_selector_blue"
+            android:thumbTint="@android:color/holo_blue_light" />
+
+        <EditText
+            android:id="@+id/ed_color_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/seekbar_blue"
+            android:layout_alignParentBottom="false"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="15dp"
+            android:enabled="false"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            android:text="#000000"
+            android:textColor="@color/teal_200"
+            android:textSize="17sp"
+            android:theme="@style/EditTextStyle" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_color_select"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/ed_color_code"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:text="选择"
+            android:textSize="15sp" />
+    </RelativeLayout>
+</LinearLayout>
