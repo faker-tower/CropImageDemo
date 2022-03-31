@@ -114,6 +114,7 @@ public class TextStickerView extends View {
 
     public void setText(String text) {
         mText = text;
+        isShowHelpBox = !mText.isEmpty();
         invalidate();
     }
 
@@ -163,6 +164,7 @@ public class TextStickerView extends View {
                 if (mCurrentMode == Status.DELETE) {    // 删除选定贴图
                     mCurrentMode = Status.IDLE; // 返回空闲状态
                     clearTextContent(); // 清空底下输入框，输入框会触发 setText() 重绘视图达到删除的目的
+                    resetView();
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
