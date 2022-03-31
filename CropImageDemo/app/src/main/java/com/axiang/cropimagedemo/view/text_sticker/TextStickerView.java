@@ -35,6 +35,7 @@ import java.util.List;
 
 public class TextStickerView extends View {
 
+    private static final long DOUBLE_CLICK_TIMEOUT = 500;   // Double Click 的间隔
     public static final float TEXT_SIZE_DEFAULT = 76f;  // 字体大小
     public static final int PADDING = 32;   // 文字和辅助线的间距
 
@@ -48,7 +49,7 @@ public class TextStickerView extends View {
     }
 
     private TextPaint mTextPaint;
-    private final Rect mTextRect = new Rect();
+    public Rect mTextRect = new Rect();
 
     private Paint mHelpLinePaint;
     private final RectF mHelpLineRectF = new RectF();
@@ -75,6 +76,11 @@ public class TextStickerView extends View {
 
     private final Point mPoint = new Point(0, 0);
     private int mCurrentMode = Status.IDLE;
+
+    private MotionEvent mFirstDownEvent;
+    private MotionEvent mSecondDownEvent;
+    private MotionEvent mFirstUpEvent;
+    private OnDoubleClickTextListener mListener;
 
     public TextStickerView(Context context) {
         super(context);
@@ -132,6 +138,17 @@ public class TextStickerView extends View {
         }
     }
 
+    /**
+     * 重置视图
+     */
+    public void resetView() {
+        mLayoutCenterX = getMeasuredWidth() / 2;
+        mLayoutCenterY = getMeasuredHeight() / 2;
+        mRotateAngle = 0;
+        mScale = 1f;
+        mTextContents.clear();
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -151,6 +168,8 @@ public class TextStickerView extends View {
                     mLastY = mRotateDstRect.centerY();
                     result = true;
                 } else if (detectInHelpBox(x, y)) { // 移动模式
+                    checkDoubleClickByDown(event);
+
                     isShowHelpBox = true;
                     mCurrentMode = Status.MOVE;
                     mLastX = x;
@@ -166,16 +185,18 @@ public class TextStickerView extends View {
                     clearTextContent(); // 清空底下输入框，输入框会触发 setText() 重绘视图达到删除的目的
                     resetView();
                 }
+
+                if (mCurrentMode != Status.MOVE) {
+                    resetDoubleClick(); // 重置，重新开始判断 Double Click
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
                 result = true;
                 if (mCurrentMode == Status.MOVE) {  // 移动贴图
                     float dx = x - mLastX;
                     float dy = y - mLastY;
-
                     mLayoutCenterX += dx;
                     mLayoutCenterY += dy;
-
                     invalidate();
 
                     mLastX = x;
@@ -184,19 +205,90 @@ public class TextStickerView extends View {
                     float dx = x - mLastX;
                     float dy = y - mLastY;
                     updateRotateAndScale(dx, dy);
-
                     invalidate();
+
                     mLastX = x;
                     mLastY = y;
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
+                result = false;
+                mCurrentMode = Status.IDLE;
+                break;
             case MotionEvent.ACTION_UP:
+                if (mFirstUpEvent == null) {
+                    mFirstUpEvent = MotionEvent.obtain(event);
+                } else {
+                    if (isDoubleClick(mFirstDownEvent, mFirstUpEvent, mSecondDownEvent, event) && mListener != null) {
+                        mListener.onDoubleClickText();
+                    }
+                    resetDoubleClick(); // 重置，重新开始判断 Double Click
+                }
+
                 result = false;
                 mCurrentMode = Status.IDLE;
                 break;
         }
         return result;
+    }
+
+    /**
+     * 考虑旋转情况下 点击点是否在内容矩形内
+     */
+    private boolean detectInHelpBox(float x, float y) {
+        mPoint.set((int) x, (int) y);
+        // 旋转点击点
+        RectUtil.rotatePoint(mPoint, mHelpLineRectF.centerX(), mHelpLineRectF.centerY(), -mRotateAngle);
+        return mHelpLineRectF.contains(mPoint.x, mPoint.y);
+    }
+
+    public void clearTextContent() {
+        if (mEditTextReference != null && mEditTextReference.get() != null) {
+            mEditTextReference.get().setText("");
+        }
+    }
+
+    /**
+     * 旋转 缩放 更新
+     */
+    public void updateRotateAndScale(final float dx, final float dy) {
+        float c_x = mHelpLineRectF.centerX();
+        float c_y = mHelpLineRectF.centerY();
+
+        float x = mRotateDstRect.centerX();
+        float y = mRotateDstRect.centerY();
+
+        float n_x = x + dx;
+        float n_y = y + dy;
+
+        float xa = x - c_x;
+        float ya = y - c_y;
+
+        float xb = n_x - c_x;
+        float yb = n_y - c_y;
+
+        float srcLen = (float) Math.sqrt(xa * xa + ya * ya);
+        float curLen = (float) Math.sqrt(xb * xb + yb * yb);
+
+        float scale = curLen / srcLen;  // 计算缩放比
+        mScale *= scale;
+        float newWidth = mHelpLineRectF.width() * mScale;
+        if (newWidth < 70) {    // 最小缩放检测
+            mScale /= scale;
+            return;
+        }
+
+        double cos = (xa * xb + ya * yb) / (srcLen * curLen);
+        if (cos > 1 || cos < -1) {
+            return;
+        }
+        float angle = (float) Math.toDegrees(Math.acos(cos));
+        float calMatrix = xa * yb - xb * ya;    // 行列式计算 确定转动方向
+
+        int flag = calMatrix > 0 ? 1 : -1;
+        angle = flag * angle;
+
+        mRotateAngle += angle;
     }
 
     @Override
@@ -291,80 +383,78 @@ public class TextStickerView extends View {
     }
 
     /**
-     * 考虑旋转情况下 点击点是否在内容矩形内
+     * DOWN 事件的 Double Click 判断
      */
-    private boolean detectInHelpBox(float x, float y) {
-        mPoint.set((int) x, (int) y);
-        // 旋转点击点
-        RectUtil.rotatePoint(mPoint, mHelpLineRectF.centerX(), mHelpLineRectF.centerY(), -mRotateAngle);
-        return mHelpLineRectF.contains(mPoint.x, mPoint.y);
+    private void checkDoubleClickByDown(MotionEvent downEvent) {
+        if (mFirstDownEvent == null) {
+            resetDoubleClick(); // 重置，重新开始判断 Double Click
+            mFirstDownEvent = MotionEvent.obtain(downEvent);
+        } else {
+            if (isDoubleClick(mFirstDownEvent, downEvent)) {
+                mSecondDownEvent = MotionEvent.obtain(downEvent);
+            } else {
+                resetDoubleClick(); // 重置，重新开始判断 Double Click
+            }
+        }
+    }
+
+    /**
+     * 判断是否双击，在 DOWN 事件中判断
+     *
+     * @param firstDown  第一次 DOWN 的 MotionEvent 事件
+     * @param secondDown 第二次 DOWN 的 MotionEvent 事件
+     */
+    private boolean isDoubleClick(MotionEvent firstDown,
+                                  MotionEvent secondDown) {
+        if (secondDown.getEventTime() - firstDown.getEventTime() > DOUBLE_CLICK_TIMEOUT) {
+            return false;
+        }
+
+        int deltaX = (int) firstDown.getX() - (int) secondDown.getX();
+        int deltaY = (int) firstDown.getY() - (int) secondDown.getY();
+        return Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2)) < 100;
+    }
+
+    /**
+     * 判断是否双击，在 UP 事件中判断
+     *
+     * @param firstDown  第一次 DOWN 的 MotionEvent 事件
+     * @param firstUp    第一次 UP 的 MotionEvent 事件
+     * @param secondDown 第二次 DOWN 的 MotionEvent 事件
+     * @param secondUp   第二次 UP 的 MotionEvent 事件
+     */
+    private boolean isDoubleClick(MotionEvent firstDown,
+                                  MotionEvent firstUp,
+                                  MotionEvent secondDown,
+                                  MotionEvent secondUp) {
+        if (secondUp.getEventTime() - firstDown.getEventTime() > DOUBLE_CLICK_TIMEOUT) {
+            return false;
+        }
+
+        int deltaX = (int) firstUp.getX() - (int) secondDown.getX();
+        int deltaY = (int) firstUp.getY() - (int) secondDown.getY();
+        return Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2)) < 100;
+    }
+
+    /**
+     * 重置 Double Click
+     */
+    private void resetDoubleClick() {
+        mFirstDownEvent = null;
+        mSecondDownEvent = null;
+        mFirstUpEvent = null;
     }
 
     public void setEditText(EditText textView) {
         mEditTextReference = new WeakReference<>(textView);
     }
 
-    public void clearTextContent() {
-        if (mEditTextReference != null && mEditTextReference.get() != null) {
-            mEditTextReference.get().setText("");
-        }
+    public void setOnDoubleClickTextListener(OnDoubleClickTextListener listener) {
+        mListener = listener;
     }
 
-    /**
-     * 旋转 缩放 更新
-     */
-    public void updateRotateAndScale(final float dx, final float dy) {
-        float c_x = mHelpLineRectF.centerX();
-        float c_y = mHelpLineRectF.centerY();
+    public interface OnDoubleClickTextListener {
 
-        float x = mRotateDstRect.centerX();
-        float y = mRotateDstRect.centerY();
-
-        float n_x = x + dx;
-        float n_y = y + dy;
-
-        float xa = x - c_x;
-        float ya = y - c_y;
-
-        float xb = n_x - c_x;
-        float yb = n_y - c_y;
-
-        float srcLen = (float) Math.sqrt(xa * xa + ya * ya);
-        float curLen = (float) Math.sqrt(xb * xb + yb * yb);
-
-        float scale = curLen / srcLen;  // 计算缩放比
-        mScale *= scale;
-        float newWidth = mHelpLineRectF.width() * mScale;
-        if (newWidth < 70) {    // 最小缩放检测
-            mScale /= scale;
-            return;
-        }
-
-        double cos = (xa * xb + ya * yb) / (srcLen * curLen);
-        if (cos > 1 || cos < -1) {
-            return;
-        }
-        float angle = (float) Math.toDegrees(Math.acos(cos));
-        float calMatrix = xa * yb - xb * ya;    // 行列式计算 确定转动方向
-
-        int flag = calMatrix > 0 ? 1 : -1;
-        angle = flag * angle;
-
-        mRotateAngle += angle;
-    }
-
-    /**
-     * 重置视图
-     */
-    public void resetView() {
-        mLayoutCenterX = getMeasuredWidth() / 2;
-        mLayoutCenterY = getMeasuredHeight() / 2;
-        mRotateAngle = 0;
-        mScale = 1f;
-        mTextContents.clear();
-    }
-
-    public float getScale() {
-        return mScale;
+        void onDoubleClickText();
     }
 }

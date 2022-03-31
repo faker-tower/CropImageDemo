@@ -120,6 +120,7 @@ public class EditImageActivity extends AppCompatActivity {
         mIvBack.setOnClickListener(view -> confirmBack());
         mTvApply.setOnClickListener(view -> onApplyClick());
         mTvSave.setOnClickListener(view -> onSaveClick());
+        mTextStickerView.setOnDoubleClickTextListener(() -> mTextStickerFragment.showKeyBoard());
     }
 
     private void initFragments() {

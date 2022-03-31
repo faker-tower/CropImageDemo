@@ -107,6 +107,8 @@ public class TextStickerFragment extends BaseEditImageFragment implements TextWa
     @Override
     public void backToMain() {
         hideInput();
+        mActivity.mTextStickerView.clearTextContent();
+        mActivity.mTextStickerView.resetView();
         mActivity.mMode = EditImageActivity.Mode.NONE;
         mActivity.mBottomOperateBar.setCurrentItem(0);
         mActivity.mStickerView.setVisibility(View.GONE);
@@ -120,8 +122,7 @@ public class TextStickerFragment extends BaseEditImageFragment implements TextWa
         if (mActivity.getCurrentFocus() == null || !isInputMethodShow()) {
             return;
         }
-        mInputMethodManager.hideSoftInputFromWindow(mActivity.getCurrentFocus().getWindowToken(),
-                InputMethodManager.HIDE_NOT_ALWAYS);
+        mInputMethodManager.hideSoftInputFromWindow(mActivity.getCurrentFocus().getWindowToken(), 0);
     }
 
     public boolean isInputMethodShow() {
@@ -132,6 +133,16 @@ public class TextStickerFragment extends BaseEditImageFragment implements TextWa
      * 保存文字贴图图片
      */
     public void applyTextStickers() {
-        
+
+    }
+
+    /**
+     * 弹出软键盘
+     */
+    public void showKeyBoard() {
+        mEtInputText.postDelayed(() -> {
+            mEtInputText.requestFocus();
+            mInputMethodManager.showSoftInput(mEtInputText, 0);
+        }, 100);
     }
 }
