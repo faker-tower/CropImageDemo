@@ -63,7 +63,7 @@ public class RectUtil {
     /**
      * 矩形在Y轴方向上的加法操作
      */
-    public static void rectAddV(final RectF srcRect, final RectF addRect, int padding) {
+    public static void rectAddY(final RectF srcRect, final RectF addRect, int padding) {
         if (srcRect == null || addRect == null) {
             return;
         }
@@ -85,7 +85,7 @@ public class RectUtil {
     /**
      * 矩形在Y轴方向上的加法操作
      */
-    public static void rectAddV(final Rect srcRect, final Rect addRect, int padding, int charMinHeight) {
+    public static void rectAddY(final Rect srcRect, final Rect addRect, int padding, int charMinHeight) {
         if (srcRect == null || addRect == null) {
             return;
         }

@@ -163,7 +163,7 @@ public class EditImageActivity extends AppCompatActivity {
                 mCropFragment.applyCropImage();
                 break;
             case Mode.TEXT:
-                mTextStickerFragment.applyCropImage();
+                mTextStickerFragment.applyTextStickers();
                 break;
         }
     }

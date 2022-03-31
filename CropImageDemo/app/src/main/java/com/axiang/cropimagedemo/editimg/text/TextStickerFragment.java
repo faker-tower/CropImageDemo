@@ -26,11 +26,13 @@ public class TextStickerFragment extends BaseEditImageFragment implements TextWa
     public static final int INDEX = ModuleConfig.INDEX_TEXT;
 
     private ImageView mIvBackToMain;
-    private AppCompatEditText mEdInputText;
+    private AppCompatEditText mEtInputText;
     private ImageView mIvColorSelector;
 
     private int mRed, mGreen, mBlue;
     private InputMethodManager mInputMethodManager;
+
+    private String mEtHint = "请输入文字";
 
     public static TextStickerFragment newInstance() {
         return new TextStickerFragment();
@@ -46,11 +48,11 @@ public class TextStickerFragment extends BaseEditImageFragment implements TextWa
 
     private void initView(View rootView) {
         mIvBackToMain = rootView.findViewById(R.id.iv_back_to_main);
-        mEdInputText = rootView.findViewById(R.id.ed_input_text);
+        mEtInputText = rootView.findViewById(R.id.et_input_text);
         mIvColorSelector = rootView.findViewById(R.id.iv_color_selector);
 
-        mEdInputText.addTextChangedListener(this);
-        mActivity.mTextStickerView.setEditText(mEdInputText);
+        mEtInputText.addTextChangedListener(this);
+        mActivity.mTextStickerView.setEditText(mEtInputText);
 
         mInputMethodManager = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
         changeTextColor(45, 215, 215);
@@ -126,7 +128,10 @@ public class TextStickerFragment extends BaseEditImageFragment implements TextWa
         return mInputMethodManager.isActive();
     }
 
-    public void applyCropImage() {
-
+    /**
+     * 保存文字贴图图片
+     */
+    public void applyTextStickers() {
+        
     }
 }

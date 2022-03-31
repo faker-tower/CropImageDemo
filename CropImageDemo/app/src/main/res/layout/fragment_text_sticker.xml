@@ -11,7 +11,7 @@
         android:src="@drawable/ic_back" />
 
     <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/ed_input_text"
+        android:id="@+id/et_input_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
@@ -20,7 +20,7 @@
         android:layout_marginEnd="12dp"
         android:layout_marginBottom="3dp"
         android:layout_weight="1"
-        android:hint="请点击此处输入文本 ..."
+        android:hint="请输入文字"
         android:textColor="@color/white"
         android:textColorHint="@color/white"
         android:textSize="15sp" />

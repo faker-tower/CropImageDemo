@@ -35,7 +35,7 @@ public class ColorPickerDialog extends DialogFragment implements SeekBar.OnSeekB
     private View mViewColorPreview;
     private SeekBar mSeekBarRed, mSeekBarGreen, mSeekBarBlue;
     private TextView mTvRedColorTip, mTvGreenColorTip, mTvBlueColorTip;
-    private EditText mEdColorCode;
+    private EditText mEtColorCode;
     private AppCompatButton mBtnColorSelect;
 
     private int mSeekBarLeft;
@@ -96,7 +96,7 @@ public class ColorPickerDialog extends DialogFragment implements SeekBar.OnSeekB
         mTvRedColorTip = rootView.findViewById(R.id.tv_red_color_tip);
         mTvGreenColorTip = rootView.findViewById(R.id.tv_green_color_tip);
         mTvBlueColorTip = rootView.findViewById(R.id.tv_blue_color_tip);
-        mEdColorCode = rootView.findViewById(R.id.ed_color_code);
+        mEtColorCode = rootView.findViewById(R.id.et_color_code);
         mBtnColorSelect = rootView.findViewById(R.id.btn_color_select);
 
         mSeekBarLeft = mSeekBarRed.getPaddingLeft();
@@ -110,7 +110,7 @@ public class ColorPickerDialog extends DialogFragment implements SeekBar.OnSeekB
         mSeekBarBlue.setProgress(mBlue);
 
         mViewColorPreview.setBackgroundColor(Color.rgb(mRed, mGreen, mBlue));
-        mEdColorCode.setText(String.format(COLOR_CODE_STRING_FORMAT, mRed, mGreen, mBlue).toUpperCase());
+        mEtColorCode.setText(String.format(COLOR_CODE_STRING_FORMAT, mRed, mGreen, mBlue).toUpperCase());
 
         mBtnColorSelect.setOnClickListener(view -> {
             if (mOnSelectListener != null) {
@@ -160,7 +160,7 @@ public class ColorPickerDialog extends DialogFragment implements SeekBar.OnSeekB
             setColorTip(mSeekBarBlue, mTvBlueColorTip, mBlue);
         }
         mViewColorPreview.setBackgroundColor(Color.rgb(mRed, mGreen, mBlue));
-        mEdColorCode.setText(String.format(COLOR_CODE_STRING_FORMAT, mRed, mGreen, mBlue).toUpperCase());
+        mEtColorCode.setText(String.format(COLOR_CODE_STRING_FORMAT, mRed, mGreen, mBlue).toUpperCase());
     }
 
     @Override

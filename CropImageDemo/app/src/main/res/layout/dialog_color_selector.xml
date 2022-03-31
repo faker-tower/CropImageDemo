@@ -76,7 +76,7 @@
             android:thumbTint="@android:color/holo_blue_light" />
 
         <EditText
-            android:id="@+id/ed_color_code"
+            android:id="@+id/et_color_code"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/seekbar_blue"

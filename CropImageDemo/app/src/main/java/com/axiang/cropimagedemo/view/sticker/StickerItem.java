@@ -162,8 +162,9 @@ public class StickerItem {
                 - BUTTON_WIDTH);
 
         double cos = (xa * xb + ya * yb) / (srcLen * curLen);
-        if (cos > 1 || cos < -1)
+        if (cos > 1 || cos < -1) {
             return;
+        }
         float angle = (float) Math.toDegrees(Math.acos(cos));
 
         // 定理
