@@ -1,7 +1,10 @@
 package com.axiang.cropimagedemo.editimg.text;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -19,9 +22,10 @@ import com.axiang.cropimagedemo.ModuleConfig;
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
+import com.axiang.cropimagedemo.editimg.sticker.SaveStickerTask;
 import com.axiang.cropimagedemo.util.DialogUtil;
 
-public class TextStickerFragment extends BaseEditImageFragment implements TextWatcher {
+public class TextStickerFragment extends BaseEditImageFragment implements TextWatcher, SaveStickerTask.TaskListener {
 
     public static final int INDEX = ModuleConfig.INDEX_TEXT;
 
@@ -32,7 +36,7 @@ public class TextStickerFragment extends BaseEditImageFragment implements TextWa
     private int mRed, mGreen, mBlue;
     private InputMethodManager mInputMethodManager;
 
-    private String mEtHint = "请输入文字";
+    private SaveStickerTask mSaveStickersTask;
 
     public static TextStickerFragment newInstance() {
         return new TextStickerFragment();
@@ -133,7 +137,11 @@ public class TextStickerFragment extends BaseEditImageFragment implements TextWa
      * 保存文字贴图图片
      */
     public void applyTextStickers() {
-
+        if (mSaveStickersTask != null) {
+            mSaveStickersTask.cancel(true);
+        }
+        mSaveStickersTask = new SaveStickerTask(mActivity, mActivity.mMainImageView.getImageViewMatrix(), this);
+        mSaveStickersTask.execute(mActivity.mMainBitmap);
     }
 
     /**
@@ -144,5 +152,35 @@ public class TextStickerFragment extends BaseEditImageFragment implements TextWa
             mEtInputText.requestFocus();
             mInputMethodManager.showSoftInput(mEtInputText, 0);
         }, 100);
+    }
+
+    @Override
+    public void handleImage(Canvas canvas, Matrix matrix) {
+        if (!isAdded()) {
+            return;
+        }
+
+        float[] f = new float[9];
+        matrix.getValues(f);
+        int dx = (int) f[Matrix.MTRANS_X];
+        int dy = (int) f[Matrix.MTRANS_Y];
+        float scale_x = f[Matrix.MSCALE_X];
+        float scale_y = f[Matrix.MSCALE_Y];
+
+        canvas.save();
+        canvas.translate(dx, dy);
+        canvas.scale(scale_x, scale_y);
+        mActivity.mTextStickerView.drawText(canvas);
+        canvas.restore();
+    }
+
+    @Override
+    public void onPostExecute(Bitmap result) {
+        if (!isAdded()) {
+            return;
+        }
+
+        mActivity.changeMainBitmap(result);
+        backToMain();
     }
 }

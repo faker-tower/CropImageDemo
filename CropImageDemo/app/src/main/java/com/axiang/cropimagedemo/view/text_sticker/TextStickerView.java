@@ -445,8 +445,8 @@ public class TextStickerView extends View {
         mFirstUpEvent = null;
     }
 
-    public void setEditText(EditText textView) {
-        mEditTextReference = new WeakReference<>(textView);
+    public void setEditText(EditText editText) {
+        mEditTextReference = new WeakReference<>(editText);
     }
 
     public void setOnDoubleClickTextListener(OnDoubleClickTextListener listener) {
