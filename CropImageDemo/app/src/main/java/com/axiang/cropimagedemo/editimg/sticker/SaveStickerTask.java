@@ -12,7 +12,6 @@ import androidx.annotation.NonNull;
 
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.util.DialogUtil;
-import com.axiang.cropimagedemo.util.Matrix3;
 
 import java.lang.ref.WeakReference;
 
@@ -50,17 +49,13 @@ public class SaveStickerTask extends AsyncTask<Bitmap, Void, Bitmap> {
     protected Bitmap doInBackground(Bitmap... params) {
         Bitmap resultBit = Bitmap.createBitmap(params[0]).copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(resultBit);
-
-        float[] data = new float[9];
-        mMainImageViewMatrix.getValues(data);    // 底部图片变化记录矩阵原始数据
-        Matrix3 cal = new Matrix3(data);    // 辅助矩阵计算类
-        Matrix3 inverseMatrix = cal.inverseMatrix();    // 计算逆矩阵
-        Matrix matrix = new Matrix();
-        matrix.setValues(inverseMatrix.getValues());
+        Matrix matrix = new Matrix(mMainImageViewMatrix);
+        Matrix invertMatrix = new Matrix();
+        matrix.invert(invertMatrix);    // 计算逆矩阵，得到进行平移缩放等操作前的 Matrix
 
         EditImageActivity activity = mEditImageActReference.get();
         if (activity != null && !activity.isFinishing() && mListener != null) {
-            mListener.handleImage(canvas, matrix);
+            mListener.handleImage(canvas, invertMatrix);
         }
         return resultBit;
     }

@@ -10,7 +10,6 @@ import androidx.annotation.NonNull;
 
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.util.DialogUtil;
-import com.axiang.cropimagedemo.util.Matrix3;
 import com.axiang.cropimagedemo.util.ToastUtil;
 
 import java.lang.ref.WeakReference;
@@ -52,14 +51,10 @@ public class CropImageTask extends AsyncTask<Bitmap, Void, Bitmap> {
 
     @Override
     protected Bitmap doInBackground(Bitmap... bitmaps) {
-        float[] data = new float[9];
-        mMainImageViewMatrix.getValues(data);    // 底部图片变化记录矩阵原始数据
-        Matrix3 cal = new Matrix3(data);    // 辅助矩阵计算类
-        Matrix3 inverseMatrix = cal.inverseMatrix();    // 计算逆矩阵
-        Matrix matrix = new Matrix();
-        matrix.setValues(inverseMatrix.getValues());
-        matrix.mapRect(mCropRect);   // 变化剪切矩形
-
+        Matrix matrix = new Matrix(mMainImageViewMatrix);
+        Matrix invertMatrix = new Matrix();
+        matrix.invert(invertMatrix);    // 计算逆矩阵，得到进行平移缩放等操作前的 Matrix
+        invertMatrix.mapRect(mCropRect);   // 变化剪切矩形
         return Bitmap.createBitmap(bitmaps[0],
                 (int) mCropRect.left, (int) mCropRect.top,
                 (int) mCropRect.width(), (int) mCropRect.height());

@@ -161,13 +161,14 @@ public class TextStickerFragment extends BaseEditImageFragment implements TextWa
         }
 
         float[] f = new float[9];
-        matrix.getValues(f);
+        matrix.getValues(f);    // Matrix本质就是3*3的矩阵，矩阵转成固定容量为9的 float 数组
         int dx = (int) f[Matrix.MTRANS_X];
         int dy = (int) f[Matrix.MTRANS_Y];
         float scale_x = f[Matrix.MSCALE_X];
         float scale_y = f[Matrix.MSCALE_Y];
 
         canvas.save();
+        // matrix 参数本身已是逆矩阵，可直接操作
         canvas.translate(dx, dy);
         canvas.scale(scale_x, scale_y);
         mActivity.mTextStickerView.drawText(canvas);
