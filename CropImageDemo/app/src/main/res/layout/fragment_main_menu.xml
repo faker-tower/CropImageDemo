@@ -40,5 +40,16 @@
             android:text="文字"
             android:textColor="@color/white"
             android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/tv_paint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="20dp"
+            android:gravity="center_vertical"
+            android:text="涂鸦"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
     </LinearLayout>
 </HorizontalScrollView>

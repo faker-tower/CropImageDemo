@@ -130,7 +130,7 @@ public class StickerFragment extends BaseEditImageFragment implements SaveSticke
         for (Integer id : addItems.keySet()) {
             StickerItem item = addItems.get(id);
             if (item != null) {
-                item.mStickerMatrix.postConcat(matrix); // 乘以底部图片变化矩阵
+                item.mStickerMatrix.postConcat(matrix); // 乘以底部图片变化矩阵，应用 matrix 上的所有操作变化
                 canvas.drawBitmap(item.mStickerBitmap, item.mStickerMatrix, null);
             }
         }

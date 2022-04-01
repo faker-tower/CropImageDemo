@@ -25,9 +25,11 @@
         <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/fragment_buckets.xml" value="0.11629064366290644" />
         <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/fragment_crop.xml" value="0.11629064366290644" />
         <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/fragment_main_menu.xml" value="0.11629064366290644" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/fragment_paint.xml" value="0.18" />
         <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/fragment_sticker.xml" value="0.11629064366290644" />
         <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/fragment_text_sticker.xml" value="0.11629064366290644" />
         <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/item_image.xml" value="0.11629064366290644" />
+        <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/item_image_paint.xml" value="0.11629064366290644" />
         <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/item_sticker.xml" value="0.11629064366290644" />
         <entry key="..\:/Android/AndroidProject/Demos/CropImageDemo/app/src/main/res/layout/item_sticker_type.xml" value="0.11629064366290644" />
       </map>

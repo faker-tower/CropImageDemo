@@ -52,7 +52,6 @@ public class CropFragment extends BaseEditImageFragment {
     private final CropRatioBtnClick mCropRatioBtnClick = new CropRatioBtnClick();
     public TextView mSelectedTextView;
 
-
     public static CropFragment newInstance() {
         return new CropFragment();
     }
