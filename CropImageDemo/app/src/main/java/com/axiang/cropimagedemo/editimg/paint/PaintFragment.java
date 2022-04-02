@@ -29,8 +29,8 @@ import com.axiang.cropimagedemo.view.paint.PaintColorCircleView;
  * 涂鸦 Fragment
  * Created by 邱翔威 on 2022/4/1
  */
-public class PaintFragment extends BaseEditImageFragment
-        implements ColorPaintAdapter.OnItemClickListener, ImagePaintAdapter.OnItemClickListener {
+public class PaintFragment extends BaseEditImageFragment implements ColorPaintAdapter.OnItemClickListener,
+        ImagePaintAdapter.OnItemClickListener {
 
     public static final int INDEX = ModuleConfig.INDEX_PAINT;
     private static final int DEFAULT_RED = 45;
@@ -42,6 +42,8 @@ public class PaintFragment extends BaseEditImageFragment
             Color.DKGRAY, Color.GRAY, Color.LTGRAY, Color.WHITE,
             Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW,
             Color.CYAN, Color.MAGENTA, R.drawable.ic_more};
+    private final int[] mImagePaintMaterials = {R.drawable.image_paint_material_01,
+            R.drawable.image_paint_material_02};
 
     private ImageView mIvBackToMain;
     private ViewFlipper mViewFlipperPaint;
@@ -95,7 +97,7 @@ public class PaintFragment extends BaseEditImageFragment
         mIvBackToMain.setOnClickListener(view -> backToMain());
         mBtnSwitchImage.setOnClickListener(view -> mViewFlipperPaint.showNext());
         mBtnSwitchColor.setOnClickListener(view -> mViewFlipperPaint.showPrevious());
-        mPaintEraser.setOnClickListener(view -> onEraserClick());
+        mPaintEraser.setOnClickListener(view -> updateEraser(!mIsEraser));
         mPaintColorCircleView.setOnClickListener(view -> showSetStokeWidthPw());
     }
 
@@ -112,7 +114,7 @@ public class PaintFragment extends BaseEditImageFragment
         LinearLayoutManager stickerListLayoutManager = new LinearLayoutManager(mActivity);
         stickerListLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
         mRvImagePaintList.setLayoutManager(stickerListLayoutManager);
-        mImagePaintAdapter = new ImagePaintAdapter(mActivity);
+        mImagePaintAdapter = new ImagePaintAdapter(mActivity, mImagePaintMaterials);
         mImagePaintAdapter.setOnItemClickListener(this);
         mRvImagePaintList.setAdapter(mImagePaintAdapter);
     }
@@ -132,8 +134,8 @@ public class PaintFragment extends BaseEditImageFragment
         mPwSetStokeWidth.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
     }
 
-    private void onEraserClick() {
-        mIsEraser = !mIsEraser;
+    private void updateEraser(boolean eraser) {
+        mIsEraser = eraser;
         mPaintEraser.setSelected(mIsEraser);
         mActivity.mPaintView.setEraser(mIsEraser);
     }
@@ -159,8 +161,8 @@ public class PaintFragment extends BaseEditImageFragment
     }
 
     @Override
-    public void onImageClick() {
-
+    public void onImageClick(int position) {
+        updateEraser(false);
     }
 
     private void showSetStokeWidthPw() {
@@ -190,16 +192,14 @@ public class PaintFragment extends BaseEditImageFragment
      * 更新画布的画笔设置
      */
     private void updatePaintView() {
-        mIsEraser = false;
-        mPaintEraser.setSelected(false);
-        mActivity.mPaintView.setEraser(false);
+        updateEraser(false);
         mActivity.mPaintView.setStokeColor(mPaintColorCircleView.getStokeColor());
         mActivity.mPaintView.setStokeWidth(mPaintColorCircleView.getStokeWidth());
     }
 
     @Override
     public void onShow() {
-        mActivity.mMode = EditImageActivity.Mode.STICKERS;
+        mActivity.mMode = EditImageActivity.Mode.PAINT;
         mActivity.mViewFlipperSave.showNext();
         mActivity.mPaintView.setVisibility(View.VISIBLE);
     }
@@ -214,7 +214,8 @@ public class PaintFragment extends BaseEditImageFragment
         mActivity.mViewFlipperSave.showPrevious();
     }
 
-    public void applyPaints() {
 
+    public void applyPaints() {
+        
     }
 }

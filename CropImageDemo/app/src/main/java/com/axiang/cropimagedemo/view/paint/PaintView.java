@@ -22,8 +22,9 @@ public class PaintView extends View {
     public static final String TAG = "PaintView";
     private static final int ERASER_STOKE_WIDTH = 40;
 
-    private Paint mPaint;
+    private Paint mColorPaint;  // 纯色 Paint
     private Paint mEraserPaint; // 橡皮擦 Paint
+    private Paint mImagePaint;  // 图片 Paint
 
     private Canvas mDrawCanvas;
     private Bitmap mDrawBitmap;
@@ -48,19 +49,19 @@ public class PaintView extends View {
     }
 
     private void init() {
-        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaint.setDither(true);
-        mPaint.setStrokeCap(Paint.Cap.ROUND);
-        mPaint.setStrokeJoin(Paint.Join.ROUND);
+        mColorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mColorPaint.setDither(true);
+        mColorPaint.setStrokeCap(Paint.Cap.ROUND);
+        mColorPaint.setStrokeJoin(Paint.Join.ROUND);
 
         mEraserPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mEraserPaint.setAlpha(0);
-        mPaint.setDither(true);
+        mColorPaint.setDither(true);
         mEraserPaint.setStyle(Paint.Style.STROKE);
         mEraserPaint.setStrokeJoin(Paint.Join.ROUND);
         mEraserPaint.setStrokeCap(Paint.Cap.ROUND);
         mEraserPaint.setStrokeWidth(ERASER_STOKE_WIDTH);
-        mEraserPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+        mEraserPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
     }
 
     @Override
@@ -99,7 +100,7 @@ public class PaintView extends View {
                 break;
             case MotionEvent.ACTION_MOVE:
                 result = true;
-                mDrawCanvas.drawLine(mLastX, mLastY, x, y, mIsEraser ? mEraserPaint : mPaint);
+                mDrawCanvas.drawLine(mLastX, mLastY, x, y, mIsEraser ? mEraserPaint : mColorPaint);
                 mLastX = x;
                 mLastY = y;
                 invalidate();
@@ -137,11 +138,11 @@ public class PaintView extends View {
     }
 
     public void setStokeWidth(float stokeWidth) {
-        mPaint.setStrokeWidth(stokeWidth);
+        mColorPaint.setStrokeWidth(stokeWidth);
     }
 
     public void setStokeColor(int stokeColor) {
-        mPaint.setColor(stokeColor);
+        mColorPaint.setColor(stokeColor);
     }
 
     public void setEraser(boolean eraser) {
