@@ -1,6 +1,9 @@
 package com.axiang.cropimagedemo.editimg.paint;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -22,6 +25,7 @@ import com.axiang.cropimagedemo.ModuleConfig;
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
+import com.axiang.cropimagedemo.editimg.sticker.SaveStickerTask;
 import com.axiang.cropimagedemo.util.DialogUtil;
 import com.axiang.cropimagedemo.view.paint.PaintColorCircleView;
 
@@ -30,7 +34,7 @@ import com.axiang.cropimagedemo.view.paint.PaintColorCircleView;
  * Created by 邱翔威 on 2022/4/1
  */
 public class PaintFragment extends BaseEditImageFragment implements ColorPaintAdapter.OnItemClickListener,
-        ImagePaintAdapter.OnItemClickListener {
+        ImagePaintAdapter.OnItemClickListener, SaveStickerTask.TaskListener {
 
     public static final int INDEX = ModuleConfig.INDEX_PAINT;
     private static final int DEFAULT_RED = 45;
@@ -64,6 +68,8 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
     private int mRed, mGreen, mBlue;
 
     private boolean mIsEraser = false;    // 是否是擦除模式
+
+    private SaveStickerTask mSavePaintTask;
 
     public static PaintFragment newInstance() {
         return new PaintFragment();
@@ -214,8 +220,37 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
         mActivity.mViewFlipperSave.showPrevious();
     }
 
+    @Override
+    public void handleImage(Canvas canvas, Matrix matrix) {
+        float[] f = new float[9];
+        matrix.getValues(f);
+        int dx = (int) f[Matrix.MTRANS_X];
+        int dy = (int) f[Matrix.MTRANS_Y];
+        float scale_x = f[Matrix.MSCALE_X];
+        float scale_y = f[Matrix.MSCALE_Y];
+        canvas.save();
+        canvas.translate(dx, dy);
+        canvas.scale(scale_x, scale_y);
+
+        if (mActivity.mPaintView.getDrawBitmap() != null) {
+            canvas.drawBitmap(mActivity.mPaintView.getDrawBitmap(), 0, 0, null);
+        }
+        canvas.restore();
+    }
+
+    @Override
+    public void onPostExecute(Bitmap result) {
+        mActivity.mPaintView.resetBitmap();
+        mActivity.changeMainBitmap(result);
+        backToMain();
+    }
 
     public void applyPaints() {
-        
+        if (mSavePaintTask != null && !mSavePaintTask.isCancelled()) {
+            mSavePaintTask.cancel(true);
+        }
+
+        mSavePaintTask = new SaveStickerTask(mActivity, mActivity.mMainImageView.getImageViewMatrix(), this);
+        mSavePaintTask.execute(mActivity.mMainBitmap);
     }
 }
