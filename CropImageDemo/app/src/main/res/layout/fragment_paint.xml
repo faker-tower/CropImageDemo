@@ -15,6 +15,7 @@
         android:id="@+id/view_flipper_paint"
         android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:layout_marginStart="5dp"
         android:layout_weight="1"
         android:flipInterval="1000">
 
@@ -22,6 +23,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal">
+
+            <com.axiang.cropimagedemo.view.paint.PaintColorCircleView
+                android:id="@+id/paint_color_circle_view"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="5dp" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_color_paint_list"
@@ -86,5 +94,5 @@
         android:layout_gravity="center_vertical"
         android:layout_marginStart="5dp"
         android:layout_marginEnd="10dp"
-        android:src="@drawable/eraser_normal" />
+        android:src="@drawable/ic_eraser" />
 </LinearLayout>

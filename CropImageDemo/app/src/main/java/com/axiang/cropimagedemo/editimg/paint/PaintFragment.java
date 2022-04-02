@@ -1,7 +1,9 @@
 package com.axiang.cropimagedemo.editimg.paint;
 
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +23,7 @@ import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.util.DialogUtil;
+import com.axiang.cropimagedemo.view.paint.PaintColorCircleView;
 
 /**
  * 涂鸦 Fragment
@@ -30,6 +33,10 @@ public class PaintFragment extends BaseEditImageFragment
         implements ColorPaintAdapter.OnItemClickListener, ImagePaintAdapter.OnItemClickListener {
 
     public static final int INDEX = ModuleConfig.INDEX_PAINT;
+    private static final int DEFAULT_RED = 45;
+    private static final int DEFAULT_GREEN = 215;
+    private static final int DEFAULT_BLUE = 215;
+    private static final int DEFAULT_STOKE_WIDTH = 10;
 
     private final int[] mPaintColors = {Color.BLACK,
             Color.DKGRAY, Color.GRAY, Color.LTGRAY, Color.WHITE,
@@ -43,12 +50,16 @@ public class PaintFragment extends BaseEditImageFragment
     private RecyclerView mRvImagePaintList;
     private Button mBtnSwitchColor;
     private ImageView mPaintEraser;
+    private PaintColorCircleView mPaintColorCircleView;
 
-    private PopupWindow mPaintSizePopup;
-    private SeekBar mPaintSizeSeekBar;
+    private PopupWindow mPwSetStokeWidth;
+    private SeekBar mSeekBarSetStokeWidth;
+    private View mViewSetStokeWidth;
 
     private ColorPaintAdapter mColorPaintAdapter;
     private ImagePaintAdapter mImagePaintAdapter;
+
+    private int mRed, mGreen, mBlue;
 
     private boolean mIsEraser = false;    // 是否是擦除模式
 
@@ -72,16 +83,20 @@ public class PaintFragment extends BaseEditImageFragment
         mRvImagePaintList = rootView.findViewById(R.id.rv_image_paint_list);
         mBtnSwitchColor = rootView.findViewById(R.id.btn_switch_color);
         mPaintEraser = rootView.findViewById(R.id.paint_eraser);
+        mPaintColorCircleView = rootView.findViewById(R.id.paint_color_circle_view);
 
         mViewFlipperPaint.setInAnimation(mActivity, R.anim.in_bottom_to_top);
         mViewFlipperPaint.setOutAnimation(mActivity, R.anim.out_bottom_to_top);
 
         initRv();
+        resetPaint();
+        initPw();
 
         mIvBackToMain.setOnClickListener(view -> backToMain());
         mBtnSwitchImage.setOnClickListener(view -> mViewFlipperPaint.showNext());
         mBtnSwitchColor.setOnClickListener(view -> mViewFlipperPaint.showPrevious());
         mPaintEraser.setOnClickListener(view -> onEraserClick());
+        mPaintColorCircleView.setOnClickListener(view -> showSetStokeWidthPw());
     }
 
     private void initRv() {
@@ -102,21 +117,45 @@ public class PaintFragment extends BaseEditImageFragment
         mRvImagePaintList.setAdapter(mImagePaintAdapter);
     }
 
-    private void onEraserClick() {
+    private void resetPaint() {
+        mPaintColorCircleView.setStokeWidth(DEFAULT_STOKE_WIDTH);
+        setPaintColor(DEFAULT_RED, DEFAULT_GREEN, DEFAULT_BLUE);
+    }
 
+    private void initPw() {
+        mViewSetStokeWidth = LayoutInflater.from(mActivity).inflate(R.layout.view_set_stoke_width, null);
+        mPwSetStokeWidth = new PopupWindow(mViewSetStokeWidth, ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        mSeekBarSetStokeWidth = mViewSetStokeWidth.findViewById(R.id.seekbar_stoke_width);
+
+        mPwSetStokeWidth.setOutsideTouchable(true);
+        mPwSetStokeWidth.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+    }
+
+    private void onEraserClick() {
+        mIsEraser = !mIsEraser;
+        mPaintEraser.setSelected(mIsEraser);
+        mActivity.mPaintView.setEraser(mIsEraser);
     }
 
     @Override
     public void onColorClick(int position) {
-
+        int color = mPaintColors[position];
+        setPaintColor(Color.red(color), Color.green(color), Color.blue(color));
     }
 
     @Override
     public void onMoreClick() {
-        DialogUtil.showColorPickerDialog(mActivity.getSupportFragmentManager(), 45, 215, 215,
-                (red, green, blue) -> {
+        DialogUtil.showColorPickerDialog(mActivity.getSupportFragmentManager(), mRed, mGreen, mBlue,
+                this::setPaintColor);
+    }
 
-                });
+    private void setPaintColor(int red, int green, int blue) {
+        mRed = red;
+        mGreen = green;
+        mBlue = blue;
+        mPaintColorCircleView.setStokeColor(Color.rgb(mRed, mGreen, mBlue));
+        updatePaintView();
     }
 
     @Override
@@ -124,22 +163,58 @@ public class PaintFragment extends BaseEditImageFragment
 
     }
 
-    public void applyPaints() {
+    private void showSetStokeWidthPw() {
+        mSeekBarSetStokeWidth.setMax(mPaintColorCircleView.getHeight());
+        mSeekBarSetStokeWidth.setProgress((int) mPaintColorCircleView.getStokeWidth());
+        mSeekBarSetStokeWidth.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mPaintColorCircleView.setStokeWidth(progress);
+                updatePaintView();
+            }
 
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+
+        mPwSetStokeWidth.showAtLocation(mActivity.mBottomOperateBar,
+                Gravity.BOTTOM, 0, mActivity.mBottomOperateBar.getHeight());
+    }
+
+    /**
+     * 更新画布的画笔设置
+     */
+    private void updatePaintView() {
+        mIsEraser = false;
+        mPaintEraser.setSelected(false);
+        mActivity.mPaintView.setEraser(false);
+        mActivity.mPaintView.setStokeColor(mPaintColorCircleView.getStokeColor());
+        mActivity.mPaintView.setStokeWidth(mPaintColorCircleView.getStokeWidth());
     }
 
     @Override
     public void onShow() {
         mActivity.mMode = EditImageActivity.Mode.STICKERS;
-        mActivity.mStickerView.setVisibility(View.VISIBLE);
         mActivity.mViewFlipperSave.showNext();
+        mActivity.mPaintView.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void backToMain() {
+        resetPaint();
+        mActivity.mPaintView.resetBitmap();
         mActivity.mMode = EditImageActivity.Mode.NONE;
+        mActivity.mPaintView.setVisibility(View.GONE);
         mActivity.mBottomOperateBar.setCurrentItem(0);
-        mActivity.mStickerView.setVisibility(View.GONE);
         mActivity.mViewFlipperSave.showPrevious();
+    }
+
+    public void applyPaints() {
+
     }
 }
