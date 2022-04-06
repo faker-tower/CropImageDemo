@@ -1,10 +1,12 @@
 package com.axiang.cropimagedemo.editimg.paint;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -28,6 +30,10 @@ import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.editimg.sticker.SaveStickerTask;
 import com.axiang.cropimagedemo.util.DialogUtil;
 import com.axiang.cropimagedemo.view.paint.PaintColorCircleView;
+import com.axiang.cropimagedemo.view.paint.PaintView;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 /**
  * 涂鸦 Fragment
@@ -36,6 +42,7 @@ import com.axiang.cropimagedemo.view.paint.PaintColorCircleView;
 public class PaintFragment extends BaseEditImageFragment implements ColorPaintAdapter.OnItemClickListener,
         ImagePaintAdapter.OnItemClickListener, SaveStickerTask.TaskListener {
 
+    public static final String TAG = "PaintFragment";
     public static final int INDEX = ModuleConfig.INDEX_PAINT;
     private static final int DEFAULT_RED = 45;
     private static final int DEFAULT_GREEN = 215;
@@ -60,13 +67,11 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
 
     private PopupWindow mPwSetStokeWidth;
     private SeekBar mSeekBarSetStokeWidth;
-    private View mViewSetStokeWidth;
 
     private ColorPaintAdapter mColorPaintAdapter;
     private ImagePaintAdapter mImagePaintAdapter;
 
     private int mRed, mGreen, mBlue;
-
     private boolean mIsEraser = false;    // 是否是擦除模式
 
     private SaveStickerTask mSavePaintTask;
@@ -130,11 +135,12 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
         setPaintColor(DEFAULT_RED, DEFAULT_GREEN, DEFAULT_BLUE);
     }
 
+    @SuppressLint("InflateParams")
     private void initPw() {
-        mViewSetStokeWidth = LayoutInflater.from(mActivity).inflate(R.layout.view_set_stoke_width, null);
-        mPwSetStokeWidth = new PopupWindow(mViewSetStokeWidth, ViewGroup.LayoutParams.MATCH_PARENT,
+        View contentView = LayoutInflater.from(mActivity).inflate(R.layout.view_set_stoke_width, null);
+        mPwSetStokeWidth = new PopupWindow(contentView, ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, true);
-        mSeekBarSetStokeWidth = mViewSetStokeWidth.findViewById(R.id.seekbar_stoke_width);
+        mSeekBarSetStokeWidth = contentView.findViewById(R.id.seekbar_stoke_width);
 
         mPwSetStokeWidth.setOutsideTouchable(true);
         mPwSetStokeWidth.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -143,7 +149,9 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
     private void updateEraser(boolean eraser) {
         mIsEraser = eraser;
         mPaintEraser.setSelected(mIsEraser);
-        mActivity.mPaintView.setEraser(mIsEraser);
+        if (eraser) {
+            mActivity.mPaintView.setMode(PaintView.Mode.ERASER);
+        }
     }
 
     @Override
@@ -163,12 +171,35 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
         mGreen = green;
         mBlue = blue;
         mPaintColorCircleView.setStokeColor(Color.rgb(mRed, mGreen, mBlue));
+        mActivity.mPaintView.setMode(PaintView.Mode.COLOR);
         updatePaintView();
     }
 
     @Override
     public void onImageClick(int position) {
-        updateEraser(false);
+        int targetWidth = mActivity.mMainBitmap.getWidth();
+        int targetHeight = mActivity.mMainBitmap.getHeight();
+        Glide.with(this)
+                .asBitmap()
+                .load(mImagePaintMaterials[position])
+                .override(targetWidth, targetHeight)
+                .centerCrop()
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        if (!isAdded()) {
+                            return;
+                        }
+
+                        updateEraser(false);
+                        mActivity.mPaintView.setMode(PaintView.Mode.IMAGE);
+                        mActivity.mPaintView.setImageBitmap(resource, mActivity.mMainImageView.getBitmapRect());
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
+                });
     }
 
     private void showSetStokeWidthPw() {
@@ -178,6 +209,7 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mPaintColorCircleView.setStokeWidth(progress);
+                mActivity.mPaintView.setMode(PaintView.Mode.COLOR);
                 updatePaintView();
             }
 
@@ -213,7 +245,7 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
     @Override
     public void backToMain() {
         resetPaint();
-        mActivity.mPaintView.resetBitmap();
+        mActivity.mPaintView.reset();
         mActivity.mMode = EditImageActivity.Mode.NONE;
         mActivity.mPaintView.setVisibility(View.GONE);
         mActivity.mBottomOperateBar.setCurrentItem(0);
@@ -232,15 +264,14 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
         canvas.translate(dx, dy);
         canvas.scale(scale_x, scale_y);
 
-        if (mActivity.mPaintView.getDrawBitmap() != null) {
-            canvas.drawBitmap(mActivity.mPaintView.getDrawBitmap(), 0, 0, null);
+        if (mActivity.mPaintView.getBufferBitmap() != null) {
+            canvas.drawBitmap(mActivity.mPaintView.getBufferBitmap(), 0, 0, null);
         }
         canvas.restore();
     }
 
     @Override
     public void onPostExecute(Bitmap result) {
-        mActivity.mPaintView.resetBitmap();
         mActivity.changeMainBitmap(result);
         backToMain();
     }

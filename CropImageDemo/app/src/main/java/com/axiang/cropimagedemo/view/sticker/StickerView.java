@@ -52,7 +52,7 @@ public class StickerView extends View {
     }
 
     public void addBitImage(final Bitmap addBit) {
-        StickerItem item = new StickerItem(this.getContext());
+        StickerItem item = new StickerItem(getContext());
         item.init(addBit, this);
         if (mCurrentItem != null) {
             mCurrentItem.mIsDrawHelpTool = false;
@@ -179,6 +179,6 @@ public class StickerView extends View {
 
     public void clear() {
         mStickerBank.clear();
-        this.invalidate();
+        invalidate();
     }
 }
