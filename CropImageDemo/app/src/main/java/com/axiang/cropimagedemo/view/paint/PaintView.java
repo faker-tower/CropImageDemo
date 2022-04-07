@@ -151,6 +151,9 @@ public class PaintView extends View {
         Paint paint = getPaint();
         if (mMode != Mode.IMAGE) {
             mBufferCanvas.drawPath(mCurrentPath, paint);
+            if (mMode == Mode.ERASER) {
+                mImageTempCanvas.drawPath(mCurrentPath, paint);
+            }
             return;
         }
 

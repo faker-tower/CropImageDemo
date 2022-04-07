@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -35,6 +36,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 
+import java.lang.ref.WeakReference;
+
 /**
  * 涂鸦 Fragment
  * Created by 邱翔威 on 2022/4/1
@@ -47,14 +50,14 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
     private static final int DEFAULT_RED = 45;
     private static final int DEFAULT_GREEN = 215;
     private static final int DEFAULT_BLUE = 215;
-    private static final int DEFAULT_STOKE_WIDTH = 10;
+    private static final int DEFAULT_STOKE_WIDTH = 20;
 
     private final int[] mPaintColors = {Color.BLACK,
             Color.DKGRAY, Color.GRAY, Color.LTGRAY, Color.WHITE,
             Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW,
             Color.CYAN, Color.MAGENTA, R.drawable.ic_more};
     private final int[] mImagePaintMaterials = {R.drawable.image_paint_material_01,
-            R.drawable.image_paint_material_02};
+            R.drawable.image_paint_material_02, R.drawable.image_paint_material_03};
 
     private ImageView mIvBackToMain;
     private ViewFlipper mViewFlipperPaint;
@@ -75,6 +78,10 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
     private boolean mIsEraser = false;    // 是否是擦除模式
 
     private SaveStickerTask mSavePaintTask;
+    private GenerateMosaicTask mGenerateMosaicTask;
+
+    private int mLastOperateMode;   // 上一个操作的 Mode 类型，用于橡皮擦复原
+    private long mOperateRecordTime;    // 上一个操作的点击时间，防止图片加载过慢造成操作错乱
 
     public static PaintFragment newInstance() {
         return new PaintFragment();
@@ -150,7 +157,10 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
         mIsEraser = eraser;
         mPaintEraser.setSelected(mIsEraser);
         if (eraser) {
+            mOperateRecordTime = System.currentTimeMillis();
             mActivity.mPaintView.setMode(PaintView.Mode.ERASER);
+        } else {
+            mActivity.mPaintView.setMode(mLastOperateMode);
         }
     }
 
@@ -170,36 +180,74 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
         mRed = red;
         mGreen = green;
         mBlue = blue;
+        updateEraser(false);
         mPaintColorCircleView.setStokeColor(Color.rgb(mRed, mGreen, mBlue));
+        mLastOperateMode = PaintView.Mode.COLOR;
+        mOperateRecordTime = System.currentTimeMillis();
+
         mActivity.mPaintView.setMode(PaintView.Mode.COLOR);
-        updatePaintView();
+        mActivity.mPaintView.setStokeColor(mPaintColorCircleView.getStokeColor());
+        mActivity.mPaintView.setStokeWidth(mPaintColorCircleView.getStokeWidth());
     }
 
     @Override
     public void onImageClick(int position) {
+        if (position == 2) {
+            generateMosaic();   // 生成马赛克图片
+        } else {
+            generateNormal(position); // 生成普通图片
+        }
+    }
+
+    /**
+     * 生成马赛克图片
+     */
+    private void generateMosaic() {
+        if (mGenerateMosaicTask != null && !mGenerateMosaicTask.isCancelled()) {
+            mGenerateMosaicTask.cancel(true);
+        }
+
+        mOperateRecordTime = System.currentTimeMillis();
+        mGenerateMosaicTask = new GenerateMosaicTask(mActivity.mMainImageView.getBitmapRect(), mOperateRecordTime,
+                (result, operateRecordTime, mainImageRectF) -> {
+                    if (!isAdded() || mOperateRecordTime != operateRecordTime) {
+                        return;
+                    }
+                    setPaintImage(result, mainImageRectF);
+                });
+        mGenerateMosaicTask.execute(mActivity.mMainBitmap);
+    }
+
+    /**
+     * 生成格子图片
+     */
+    private void generateNormal(int position) {
         int targetWidth = mActivity.mMainBitmap.getWidth();
         int targetHeight = mActivity.mMainBitmap.getHeight();
+        mOperateRecordTime = System.currentTimeMillis();
+
         Glide.with(this)
                 .asBitmap()
                 .load(mImagePaintMaterials[position])
                 .override(targetWidth, targetHeight)
                 .centerCrop()
-                .into(new CustomTarget<Bitmap>() {
+                .into(new PaintCustomTarget(this, mOperateRecordTime) {
                     @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        if (!isAdded()) {
+                    public void onResourceReady(@NonNull Bitmap resource, long operateRecordTime) {
+                        if (mOperateRecordTime != operateRecordTime) {
                             return;
                         }
-
-                        updateEraser(false);
-                        mActivity.mPaintView.setMode(PaintView.Mode.IMAGE);
-                        mActivity.mPaintView.setImageBitmap(resource, mActivity.mMainImageView.getBitmapRect());
-                    }
-
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        setPaintImage(resource, mActivity.mMainImageView.getBitmapRect());
                     }
                 });
+    }
+
+    private void setPaintImage(@NonNull Bitmap bitmap, RectF mainImageRectF) {
+        updateEraser(false);
+        mLastOperateMode = PaintView.Mode.IMAGE;
+        mActivity.mPaintView.setMode(PaintView.Mode.IMAGE);
+        mActivity.mPaintView.setImageBitmap(bitmap, mainImageRectF);
+        mActivity.mPaintView.setStokeWidth(mPaintColorCircleView.getStokeWidth());
     }
 
     private void showSetStokeWidthPw() {
@@ -209,8 +257,7 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mPaintColorCircleView.setStokeWidth(progress);
-                mActivity.mPaintView.setMode(PaintView.Mode.COLOR);
-                updatePaintView();
+                mActivity.mPaintView.setStokeWidth(mPaintColorCircleView.getStokeWidth());
             }
 
             @Override
@@ -224,15 +271,6 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
 
         mPwSetStokeWidth.showAtLocation(mActivity.mBottomOperateBar,
                 Gravity.BOTTOM, 0, mActivity.mBottomOperateBar.getHeight());
-    }
-
-    /**
-     * 更新画布的画笔设置
-     */
-    private void updatePaintView() {
-        updateEraser(false);
-        mActivity.mPaintView.setStokeColor(mPaintColorCircleView.getStokeColor());
-        mActivity.mPaintView.setStokeWidth(mPaintColorCircleView.getStokeWidth());
     }
 
     @Override
@@ -283,5 +321,32 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
 
         mSavePaintTask = new SaveStickerTask(mActivity, mActivity.mMainImageView.getImageViewMatrix(), this);
         mSavePaintTask.execute(mActivity.mMainBitmap);
+    }
+
+    private static abstract class PaintCustomTarget extends CustomTarget<Bitmap> {
+
+        private final long mOperateRecordTime;
+        private WeakReference<PaintFragment> mFragmentReference;
+
+        public PaintCustomTarget(PaintFragment paintFragment, long operateRecordTime) {
+            super();
+            mFragmentReference = new WeakReference<>(paintFragment);
+            mOperateRecordTime = operateRecordTime;
+        }
+
+        @Override
+        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+            PaintFragment paintFragment = mFragmentReference.get();
+            if (paintFragment == null || !paintFragment.isAdded()) {
+                return;
+            }
+            onResourceReady(resource, mOperateRecordTime);
+        }
+
+        public abstract void onResourceReady(@NonNull Bitmap resource, long operateRecordTime);
+
+        @Override
+        public void onLoadCleared(@Nullable Drawable placeholder) {
+        }
     }
 }
