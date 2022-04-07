@@ -18,9 +18,6 @@ import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -41,7 +38,6 @@ public class PaintView extends View {
     public static final String TAG = "PaintView";
     private static final int ERASER_STOKE_WIDTH = 40;
 
-    private BitmapPool mBitmapPool;
     private Canvas mBufferCanvas;   // 绘图缓存保管 Canvas
     private Bitmap mBufferBitmap;   // 绘图缓存保管 Bitmap
     private Bitmap mImageBitmap;    // 要绘制的图片，大小和底图一致
@@ -74,8 +70,6 @@ public class PaintView extends View {
     }
 
     private void init(@NonNull Context context) {
-        mBitmapPool = Glide.get(context).getBitmapPool();
-
         mColorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mColorPaint.setDither(true);
         mColorPaint.setStyle(Paint.Style.STROKE);
@@ -101,7 +95,7 @@ public class PaintView extends View {
     }
 
     private void generateBufferBitmap() {
-        mBufferBitmap = mBitmapPool.get(getMeasuredWidth(), getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+        mBufferBitmap = Bitmap.createBitmap(getMeasuredWidth(), getMeasuredHeight(), Bitmap.Config.ARGB_8888);
         mBufferCanvas = new Canvas(mBufferBitmap);
     }
 
@@ -196,7 +190,7 @@ public class PaintView extends View {
 
     private void recycleBitmap(Bitmap bitmap) {
         if (bitmap != null && !bitmap.isRecycled()) {
-            mBitmapPool.put(bitmap);
+            bitmap.recycle();
         }
     }
 
@@ -230,7 +224,7 @@ public class PaintView extends View {
         mImageBitmap = imageBitmap;
         mImageRectF = new RectF(imageRectF);
 
-        mImageTempBitmap = mBitmapPool.get(getMeasuredWidth(), getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+        mImageTempBitmap = Bitmap.createBitmap(getMeasuredWidth(), getMeasuredHeight(), Bitmap.Config.ARGB_8888);
         mImageTempCanvas = new Canvas(mImageTempBitmap);
     }
 }
