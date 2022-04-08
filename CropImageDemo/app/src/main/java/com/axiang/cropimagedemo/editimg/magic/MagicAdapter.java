@@ -1,4 +1,4 @@
-package com.axiang.cropimagedemo.editimg.paint;
+package com.axiang.cropimagedemo.editimg.magic;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -10,19 +10,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.axiang.cropimagedemo.R;
-import com.bumptech.glide.Glide;
+import com.axiang.cropimagedemo.util.BitmapUtil;
 
 /**
- * Created by 邱翔威 on 2022/4/1
+ * Created by 邱翔威 on 2022/4/7
  */
-public class ImagePaintAdapter extends RecyclerView.Adapter<ImagePaintAdapter.ViewHolder> {
+public class MagicAdapter extends RecyclerView.Adapter<MagicAdapter.ViewHolder> {
 
     private final Context mContext;
-    private final int[] mMaterials;
+    private final String[] mMaterials;
 
     private OnItemClickListener mListener;
 
-    public ImagePaintAdapter(Context context, int[] materials) {
+    public MagicAdapter(Context context, String[] materials) {
         mContext = context;
         mMaterials = materials;
     }
@@ -30,15 +30,15 @@ public class ImagePaintAdapter extends RecyclerView.Adapter<ImagePaintAdapter.Vi
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(mContext).inflate(R.layout.item_color_paint, parent, false));
+        return new ViewHolder(LayoutInflater.from(mContext).inflate(R.layout.item_magic, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Glide.with(mContext).load(mMaterials[position]).centerCrop().into(holder.mIvColor);
-        holder.mIvColor.setOnClickListener(view -> {
+        holder.mIvMagic.setImageBitmap(BitmapUtil.getBitmapFromAssetsFile(mContext, mMaterials[position]));
+        holder.mIvMagic.setOnClickListener(view -> {
             if (mListener != null) {
-                mListener.onImageClick(position);
+                mListener.onImageClick(mMaterials[position]);
             }
         });
     }
@@ -54,16 +54,16 @@ public class ImagePaintAdapter extends RecyclerView.Adapter<ImagePaintAdapter.Vi
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        private final ImageView mIvColor;
+        private final ImageView mIvMagic;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            mIvColor = itemView.findViewById(R.id.iv_color);
+            mIvMagic = itemView.findViewById(R.id.iv_magic);
         }
     }
 
     public interface OnItemClickListener {
 
-        void onImageClick(int position);
+        void onImageClick(String key);
     }
 }

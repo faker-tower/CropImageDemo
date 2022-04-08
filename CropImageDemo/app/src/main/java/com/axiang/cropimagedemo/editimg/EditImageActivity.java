@@ -20,6 +20,7 @@ import androidx.fragment.app.FragmentPagerAdapter;
 
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.crop.CropFragment;
+import com.axiang.cropimagedemo.editimg.magic.MagicFragment;
 import com.axiang.cropimagedemo.editimg.paint.PaintFragment;
 import com.axiang.cropimagedemo.editimg.sticker.StickerFragment;
 import com.axiang.cropimagedemo.editimg.text.TextStickerFragment;
@@ -28,6 +29,7 @@ import com.axiang.cropimagedemo.view.ScrollableViewPager;
 import com.axiang.cropimagedemo.view.crop.CropImageView;
 import com.axiang.cropimagedemo.view.imagezoom.ImageViewTouch;
 import com.axiang.cropimagedemo.view.imagezoom.ImageViewTouchBase;
+import com.axiang.cropimagedemo.view.magic.MagicView;
 import com.axiang.cropimagedemo.view.paint.PaintView;
 import com.axiang.cropimagedemo.view.sticker.StickerView;
 import com.axiang.cropimagedemo.view.text_sticker.TextStickerView;
@@ -41,13 +43,14 @@ import java.lang.annotation.RetentionPolicy;
 public class EditImageActivity extends AppCompatActivity {
 
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef({Mode.NONE, Mode.STICKERS, Mode.CROP, Mode.TEXT, Mode.PAINT})
+    @IntDef({Mode.NONE, Mode.STICKERS, Mode.CROP, Mode.TEXT, Mode.PAINT, Mode.MAGIC})
     public @interface Mode {
         int NONE = 0;
         int STICKERS = 1;   // 贴图模式
         int CROP = 2;   // 裁剪模式
         int TEXT = 3;   // 文字
         int PAINT = 4;  // 涂鸦
+        int MAGIC = 5;  // 指尖魔法
     }
 
     public static final String INTENT_IMAGE_PATH = "image_path";
@@ -81,6 +84,9 @@ public class EditImageActivity extends AppCompatActivity {
     // 涂鸦
     public PaintFragment mPaintFragment;
     public PaintView mPaintView;
+    // 指尖魔法
+    public MagicFragment mMagicFragment;
+    public MagicView mMagicView;
 
     public int mMode = Mode.NONE;  // 当前操作模式
 
@@ -117,6 +123,7 @@ public class EditImageActivity extends AppCompatActivity {
         mCropImageView = findViewById(R.id.crop_image_view);
         mTextStickerView = findViewById(R.id.text_sticker_view);
         mPaintView = findViewById(R.id.paint_view);
+        mMagicView = findViewById(R.id.magic_view);
 
         mViewFlipperSave.setInAnimation(this, R.anim.in_bottom_to_top);
         mViewFlipperSave.setOutAnimation(this, R.anim.out_bottom_to_top);
@@ -137,6 +144,7 @@ public class EditImageActivity extends AppCompatActivity {
         mCropFragment = CropFragment.newInstance();
         mTextStickerFragment = TextStickerFragment.newInstance();
         mPaintFragment = PaintFragment.newInstance();
+        mMagicFragment = MagicFragment.newInstance();
     }
 
     private void registerObserver() {
@@ -145,6 +153,7 @@ public class EditImageActivity extends AppCompatActivity {
         getLifecycle().addObserver(mCropFragment);
         getLifecycle().addObserver(mTextStickerFragment);
         getLifecycle().addObserver(mPaintFragment);
+        getLifecycle().addObserver(mMagicFragment);
     }
 
     private void loadImage() {
@@ -178,6 +187,9 @@ public class EditImageActivity extends AppCompatActivity {
                 break;
             case Mode.PAINT:
                 mPaintFragment.applyPaints();
+                break;
+            case Mode.MAGIC:
+                mMagicFragment.applyPaints();
                 break;
         }
     }
@@ -240,6 +252,8 @@ public class EditImageActivity extends AppCompatActivity {
         @Override
         public Fragment getItem(int position) {
             switch (position) {
+                case MagicFragment.INDEX:
+                    return mMagicFragment;
                 case PaintFragment.INDEX:
                     return mPaintFragment;
                 case TextStickerFragment.INDEX:
@@ -256,7 +270,7 @@ public class EditImageActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return 5;
+            return 6;
         }
     }
 }

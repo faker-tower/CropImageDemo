@@ -18,8 +18,6 @@ import com.axiang.cropimagedemo.R;
  */
 public class ColorPaintAdapter extends RecyclerView.Adapter<ColorPaintAdapter.ViewHolder> {
 
-    public static final String TAG = "ColorPaintAdapter";
-
     private final Context mContext;
     private final int[] mColors;
 

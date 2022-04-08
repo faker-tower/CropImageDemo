@@ -7,4 +7,5 @@ public final class ModuleConfig {
     public static final int INDEX_CROP = 2;  // 裁剪
     public static final int INDEX_TEXT = 3;  // 文字
     public static final int INDEX_PAINT = 4;  // 涂鸦
+    public static final int INDEX_MAGIC = 5;  // 魔法
 }

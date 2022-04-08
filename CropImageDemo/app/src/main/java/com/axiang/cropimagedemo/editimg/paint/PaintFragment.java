@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -33,10 +32,6 @@ import com.axiang.cropimagedemo.util.DialogUtil;
 import com.axiang.cropimagedemo.view.paint.PaintColorCircleView;
 import com.axiang.cropimagedemo.view.paint.PaintView;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
-
-import java.lang.ref.WeakReference;
 
 /**
  * 涂鸦 Fragment
@@ -45,7 +40,6 @@ import java.lang.ref.WeakReference;
 public class PaintFragment extends BaseEditImageFragment implements ColorPaintAdapter.OnItemClickListener,
         ImagePaintAdapter.OnItemClickListener, SaveStickerTask.TaskListener {
 
-    public static final String TAG = "PaintFragment";
     public static final int INDEX = ModuleConfig.INDEX_PAINT;
     private static final int DEFAULT_RED = 45;
     private static final int DEFAULT_GREEN = 215;
@@ -321,32 +315,5 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
 
         mSavePaintTask = new SaveStickerTask(mActivity, mActivity.mMainImageView.getImageViewMatrix(), this);
         mSavePaintTask.execute(mActivity.mMainBitmap);
-    }
-
-    private static abstract class PaintCustomTarget extends CustomTarget<Bitmap> {
-
-        private final long mOperateRecordTime;
-        private WeakReference<PaintFragment> mFragmentReference;
-
-        public PaintCustomTarget(PaintFragment paintFragment, long operateRecordTime) {
-            super();
-            mFragmentReference = new WeakReference<>(paintFragment);
-            mOperateRecordTime = operateRecordTime;
-        }
-
-        @Override
-        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-            PaintFragment paintFragment = mFragmentReference.get();
-            if (paintFragment == null || !paintFragment.isAdded()) {
-                return;
-            }
-            onResourceReady(resource, mOperateRecordTime);
-        }
-
-        public abstract void onResourceReady(@NonNull Bitmap resource, long operateRecordTime);
-
-        @Override
-        public void onLoadCleared(@Nullable Drawable placeholder) {
-        }
     }
 }

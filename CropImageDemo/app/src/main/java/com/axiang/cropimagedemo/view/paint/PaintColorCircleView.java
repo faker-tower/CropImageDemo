@@ -14,8 +14,6 @@ import androidx.annotation.Nullable;
  */
 public class PaintColorCircleView extends View {
 
-    public static final String TAG = "PaintMode";
-
     private Paint mPaint;
     private int mStokeColor;
     private float mStokeWidth;

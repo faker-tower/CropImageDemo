@@ -1,8 +1,10 @@
 package com.axiang.cropimagedemo.util;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentManager;
@@ -28,5 +30,19 @@ public class DialogUtil {
                                              int blue,
                                              ColorPickerDialog.OnSelectListener onSelectListener) {
         ColorPickerDialog.show(fragmentManager, red, green, blue, onSelectListener);
+    }
+
+    public static void showAlertDialog(@NonNull Context context, String content,
+                                       DialogInterface.OnClickListener positiveListener) {
+        new AlertDialog.Builder(context)
+                .setMessage(content)
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    if (positiveListener != null) {
+                        positiveListener.onClick(dialog, which);
+                    }
+                    dialog.dismiss();
+                })
+                .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 }

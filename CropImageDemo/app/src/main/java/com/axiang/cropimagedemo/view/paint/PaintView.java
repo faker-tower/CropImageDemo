@@ -35,7 +35,6 @@ public class PaintView extends View {
         int IMAGE = 2;  // 图片涂鸦
     }
 
-    public static final String TAG = "PaintView";
     private static final int ERASER_STOKE_WIDTH = 40;
 
     private Canvas mBufferCanvas;   // 绘图缓存保管 Canvas

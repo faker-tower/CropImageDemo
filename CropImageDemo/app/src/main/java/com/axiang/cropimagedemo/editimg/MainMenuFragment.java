@@ -23,6 +23,7 @@ public class MainMenuFragment extends BaseEditImageFragment {
     private TextView mTvCrop;
     private TextView mTvTextSticker;
     private TextView mTvPaint;
+    private TextView mTvMagic;
 
     public static MainMenuFragment newInstance() {
         return new MainMenuFragment();
@@ -41,11 +42,13 @@ public class MainMenuFragment extends BaseEditImageFragment {
         mTvCrop = rootView.findViewById(R.id.tv_crop);
         mTvTextSticker = rootView.findViewById(R.id.tv_text_sticker);
         mTvPaint = rootView.findViewById(R.id.tv_paint);
+        mTvMagic = rootView.findViewById(R.id.tv_magic);
 
         mTvSticker.setOnClickListener(view -> onStickerClick());
         mTvCrop.setOnClickListener(view -> onCropClick());
         mTvTextSticker.setOnClickListener(view -> onTextClick());
         mTvPaint.setOnClickListener(view -> onPaintClick());
+        mTvMagic.setOnClickListener(view -> onMagicClick());
     }
 
     /**
@@ -78,6 +81,14 @@ public class MainMenuFragment extends BaseEditImageFragment {
     private void onPaintClick() {
         mActivity.mBottomOperateBar.setCurrentItem(ModuleConfig.INDEX_PAINT);
         mActivity.mPaintFragment.onShow();
+    }
+
+    /**
+     * 指尖魔法 点击
+     */
+    private void onMagicClick() {
+        mActivity.mBottomOperateBar.setCurrentItem(ModuleConfig.INDEX_MAGIC);
+        mActivity.mMagicFragment.onShow();
     }
 
     @Override
