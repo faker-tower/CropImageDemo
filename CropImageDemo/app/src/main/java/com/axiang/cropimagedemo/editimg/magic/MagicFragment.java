@@ -1,5 +1,8 @@
 package com.axiang.cropimagedemo.editimg.magic;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +18,7 @@ import com.axiang.cropimagedemo.ModuleConfig;
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
+import com.axiang.cropimagedemo.editimg.sticker.SaveStickerTask;
 import com.axiang.cropimagedemo.util.DialogUtil;
 
 import java.util.LinkedHashMap;
@@ -24,7 +28,8 @@ import java.util.Map;
  * 指尖魔法 Fragment
  * Created by 邱翔威 on 2022/4/7
  */
-public class MagicFragment extends BaseEditImageFragment implements MagicAdapter.OnItemClickListener {
+public class MagicFragment extends BaseEditImageFragment implements MagicAdapter.OnItemClickListener,
+        SaveStickerTask.TaskListener {
 
     public static final int INDEX = ModuleConfig.INDEX_MAGIC;
 
@@ -50,6 +55,8 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
     private ImageView mIvClear;
 
     private MagicAdapter mMagicAdapter;
+
+    private SaveStickerTask mSaveMagicTask;
 
     public static MagicFragment newInstance() {
         return new MagicFragment();
@@ -102,6 +109,7 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
 
     @Override
     public void backToMain() {
+        mActivity.mMagicView.reset();
         mActivity.mMode = EditImageActivity.Mode.NONE;
         mActivity.mMagicView.setVisibility(View.GONE);
         mActivity.mBottomOperateBar.setCurrentItem(0);
@@ -109,6 +117,35 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
     }
 
     public void applyPaints() {
+        if (mSaveMagicTask != null && !mSaveMagicTask.isCancelled()) {
+            mSaveMagicTask.cancel(true);
+        }
 
+        mSaveMagicTask = new SaveStickerTask(mActivity, mActivity.mMainImageView.getImageViewMatrix(), this);
+        mSaveMagicTask.execute(mActivity.mMainBitmap);
+    }
+
+    @Override
+    public void handleImage(Canvas canvas, Matrix matrix) {
+        float[] f = new float[9];
+        matrix.getValues(f);
+        int dx = (int) f[Matrix.MTRANS_X];
+        int dy = (int) f[Matrix.MTRANS_Y];
+        float scale_x = f[Matrix.MSCALE_X];
+        float scale_y = f[Matrix.MSCALE_Y];
+        canvas.save();
+        canvas.translate(dx, dy);
+        canvas.scale(scale_x, scale_y);
+
+        if (mActivity.mMagicView.getBufferBitmap() != null && !mActivity.mMagicView.getBufferBitmap().isRecycled()) {
+            canvas.drawBitmap(mActivity.mMagicView.getBufferBitmap(), 0, 0, null);
+        }
+        canvas.restore();
+    }
+
+    @Override
+    public void onPostExecute(Bitmap result) {
+        mActivity.changeMainBitmap(result);
+        backToMain();
     }
 }

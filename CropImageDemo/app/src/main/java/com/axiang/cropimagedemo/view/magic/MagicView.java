@@ -132,22 +132,33 @@ public class MagicView extends View {
         }
 
         mDstRect.offset(dx, dy);
+
+        // 对图标进行随机略微的缩放和旋转操作
+        float scale = (float) ((((Math.random() + 1) * 2) + 8f) / 10); // 缩放区间：[0.8-1.2)
+        float rotate = (float) (Math.random() * 360);   // 旋转区间：[0-360)
+        operateMaterial(scale, rotate);
+
+        mLastX = x;
+        mLastY = y;
+    }
+
+    /**
+     * 取一个随机素材图标，进行指定的缩放和旋转
+     */
+    private void operateMaterial(float scale, float rotate) {
+        if (mMaterialBitmaps == null || mMaterialBitmaps.length <= 0) {
+            return;
+        }
+
         Bitmap bitmap = getRandomBitmap();
 
-        // 对图标进行随机略微的缩放操作
         RectF operateRect = new RectF(mDstRect);
-        float scale = (float) ((((Math.random() + 1) * 2) + 8f) / 10); // 缩放区间：[0.8-1.2)
         RectUtil.scaleRect(operateRect, scale, scale);
 
-        // 对图标进行随机略微的旋转操作
-        float rotate = (float) (Math.random() * 360);   // 旋转区间：[0-360)
         mBufferCanvas.save();
         mBufferCanvas.rotate(rotate, operateRect.centerX(), operateRect.centerY());
         mBufferCanvas.drawBitmap(bitmap, mSrcRect, operateRect, mMaterialPaint);
         mBufferCanvas.restore();
-
-        mLastX = x;
-        mLastY = y;
         invalidate();
     }
 
@@ -168,14 +179,16 @@ public class MagicView extends View {
     }
 
     private void handleUp(float x, float y) {
+        if (mMaterialBitmaps == null || mMaterialBitmaps.length <= 0) {
+            return;
+        }
+
         if (isHappenMove(x, y)) {   // 发生了滑动
             return;
         }
 
-        Bitmap bitmap = getRandomBitmap();
-        RectUtil.scaleRect(mDstRect, 3f, 3f);
-        mBufferCanvas.drawBitmap(bitmap, mSrcRect, mDstRect, mMaterialPaint);
-        invalidate();
+        float rotate = (float) (Math.random() * 360);   // 旋转区间：[0-360)
+        operateMaterial(4f, rotate);
     }
 
     @Override
@@ -200,6 +213,8 @@ public class MagicView extends View {
                 recycleBitmap(materialBitmap);
             }
         }
+        mMaterials = null;
+        mMaterialBitmaps = null;
     }
 
     private void recycleBitmap(Bitmap bitmap) {
@@ -212,9 +227,12 @@ public class MagicView extends View {
      * 重置画布
      */
     public void reset() {
-        mBufferCanvas = null;
-        recycleBitmap(mBufferBitmap);
+        recyclerAllBitMaps();
         generateBufferBitmap();
+    }
+
+    public Bitmap getBufferBitmap() {
+        return mBufferBitmap;
     }
 
     /**
