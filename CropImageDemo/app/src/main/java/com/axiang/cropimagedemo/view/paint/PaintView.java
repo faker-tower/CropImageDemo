@@ -81,7 +81,6 @@ public class PaintView extends View {
         mEraserPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
         mImagePaint = new Paint(mColorPaint);
-        mImagePaint.setFilterBitmap(true);
 
         mCurrentPath = new Path();
 
