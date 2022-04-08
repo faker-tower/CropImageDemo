@@ -55,20 +55,20 @@ public class PaintView extends View {
 
     public PaintView(Context context) {
         super(context);
-        init(context);
+        init();
     }
 
     public PaintView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init(context);
+        init();
     }
 
     public PaintView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context);
+        init();
     }
 
-    private void init(@NonNull Context context) {
+    private void init() {
         mColorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mColorPaint.setDither(true);
         mColorPaint.setStyle(Paint.Style.STROKE);
@@ -144,7 +144,7 @@ public class PaintView extends View {
         Paint paint = getPaint();
         if (mMode != Mode.IMAGE) {
             mBufferCanvas.drawPath(mCurrentPath, paint);
-            if (mMode == Mode.ERASER) {
+            if (mMode == Mode.ERASER && mImageTempCanvas != null) {
                 mImageTempCanvas.drawPath(mCurrentPath, paint);
             }
             return;
