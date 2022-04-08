@@ -15,8 +15,9 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.IntDef;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.axiang.cropimagedemo.util.PaintUtil;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -48,8 +49,9 @@ public class PaintView extends View {
     private Paint mEraserPaint; // 橡皮擦 Paint
     private Paint mImagePaint;  // 图片 Paint
     private Path mCurrentPath;  // 当前的涂鸦轨迹
+    private Paint mDrawBitmapPaint;
 
-    private float mLastX, mLastY;
+    private float mInitX, mInitY, mLastX, mLastY;
 
     private int mMode;   // 当前的涂鸦模式
 
@@ -69,8 +71,7 @@ public class PaintView extends View {
     }
 
     private void init() {
-        mColorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mColorPaint.setDither(true);
+        mColorPaint = PaintUtil.newDefaultPaint();
         mColorPaint.setStyle(Paint.Style.STROKE);
         mColorPaint.setStrokeCap(Paint.Cap.ROUND);
         mColorPaint.setStrokeJoin(Paint.Join.ROUND);
@@ -83,6 +84,8 @@ public class PaintView extends View {
         mImagePaint.setFilterBitmap(true);
 
         mCurrentPath = new Path();
+
+        mDrawBitmapPaint = PaintUtil.newDefaultPaint();
     }
 
     @Override
@@ -102,7 +105,7 @@ public class PaintView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (mBufferBitmap != null && !mBufferBitmap.isRecycled()) {
-            canvas.drawBitmap(mBufferBitmap, 0f, 0f, null);
+            canvas.drawBitmap(mBufferBitmap, 0f, 0f, mDrawBitmapPaint);
         }
     }
 
@@ -117,16 +120,16 @@ public class PaintView extends View {
             case MotionEvent.ACTION_DOWN:
                 result = true;
                 mCurrentPath.moveTo(x, y);
-                mLastX = x;
-                mLastY = y;
+                mLastX = mInitX = x;
+                mLastY = mInitY = y;
                 break;
             case MotionEvent.ACTION_MOVE:
                 result = true;
-                mCurrentPath.quadTo(mLastX, mLastY, x, y);
-                handleMove();
+                handleMove(x, y);
+                invalidate();
                 mLastX = x;
                 mLastY = y;
-                invalidate();
+                mCurrentPath.reset();
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
@@ -140,7 +143,18 @@ public class PaintView extends View {
     /**
      * MOVE 事件中的图层处理
      */
-    private void handleMove() {
+    private void handleMove(float x, float y) {
+        float midX, midY;   // 控制点
+        if (mLastX == x && mLastY == y) {
+            x += 0.1;
+        }
+        midX = (mLastX + x) / 2;
+        midY = (mLastY + y) / 2;
+        mCurrentPath.moveTo(mInitX, mInitY);
+        mInitX = midX;
+        mInitY = midY;
+        mCurrentPath.quadTo(mLastX, mLastY, midX, midY);
+
         Paint paint = getPaint();
         if (mMode != Mode.IMAGE) {
             mBufferCanvas.drawPath(mCurrentPath, paint);
@@ -157,8 +171,8 @@ public class PaintView extends View {
         Rect src = new Rect(0, 0, mImageBitmap.getWidth(), mImageBitmap.getHeight());
         mImageTempCanvas.drawBitmap(mImageBitmap, src, mImageRectF, paint);
 
-        // 这里不需要用到画笔了，只是简单的图层合并
-        mBufferCanvas.drawBitmap(mImageTempBitmap, 0, 0, null);
+        // 图层合并
+        mBufferCanvas.drawBitmap(mImageTempBitmap, 0, 0, mDrawBitmapPaint);
     }
 
     private Paint getPaint() {

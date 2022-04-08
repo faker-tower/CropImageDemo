@@ -20,6 +20,7 @@ import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.editimg.sticker.SaveStickerTask;
 import com.axiang.cropimagedemo.util.DialogUtil;
+import com.axiang.cropimagedemo.util.PaintUtil;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -138,7 +139,7 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
         canvas.scale(scale_x, scale_y);
 
         if (mActivity.mMagicView.getBufferBitmap() != null && !mActivity.mMagicView.getBufferBitmap().isRecycled()) {
-            canvas.drawBitmap(mActivity.mMagicView.getBufferBitmap(), 0, 0, null);
+            canvas.drawBitmap(mActivity.mMagicView.getBufferBitmap(), 0, 0, PaintUtil.newDefaultPaint());
         }
         canvas.restore();
     }

@@ -5,6 +5,12 @@ import android.graphics.Paint;
 
 public class PaintUtil {
 
+    public static Paint newDefaultPaint() {
+        Paint defaultPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        defaultPaint.setDither(true);
+        return defaultPaint;
+    }
+
     /**
      * 辅助线 Paint
      */

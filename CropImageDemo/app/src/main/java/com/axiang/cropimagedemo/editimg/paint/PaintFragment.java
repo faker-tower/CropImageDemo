@@ -29,6 +29,7 @@ import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.editimg.sticker.SaveStickerTask;
 import com.axiang.cropimagedemo.util.DialogUtil;
+import com.axiang.cropimagedemo.util.PaintUtil;
 import com.axiang.cropimagedemo.view.paint.PaintColorCircleView;
 import com.axiang.cropimagedemo.view.paint.PaintView;
 import com.bumptech.glide.Glide;
@@ -297,7 +298,7 @@ public class PaintFragment extends BaseEditImageFragment implements ColorPaintAd
         canvas.scale(scale_x, scale_y);
 
         if (mActivity.mPaintView.getBufferBitmap() != null) {
-            canvas.drawBitmap(mActivity.mPaintView.getBufferBitmap(), 0, 0, null);
+            canvas.drawBitmap(mActivity.mPaintView.getBufferBitmap(), 0, 0, PaintUtil.newDefaultPaint());
         }
         canvas.restore();
     }

@@ -17,6 +17,7 @@ import android.view.ViewConfiguration;
 import androidx.annotation.Nullable;
 
 import com.axiang.cropimagedemo.util.BitmapUtil;
+import com.axiang.cropimagedemo.util.PaintUtil;
 import com.axiang.cropimagedemo.util.RectUtil;
 
 import java.util.Arrays;
@@ -38,7 +39,7 @@ public class MagicView extends View {
     private RectF mDstRect;
 
     private Paint mEraserPaint; // 橡皮擦 Paint
-    private Paint mMaterialPaint; // 素材 Paint
+    private Paint mDrawBitmapPaint;
 
     private float mInitX, mInitY, mLastX, mLastY;
 
@@ -58,13 +59,11 @@ public class MagicView extends View {
     }
 
     private void init() {
-        mEraserPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mEraserPaint.setDither(true);
+        mEraserPaint = PaintUtil.newDefaultPaint();
         mEraserPaint.setStyle(Paint.Style.FILL);
         mEraserPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
-        mMaterialPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mMaterialPaint.setDither(true);
+        mDrawBitmapPaint = PaintUtil.newDefaultPaint();
     }
 
     @Override
@@ -157,7 +156,7 @@ public class MagicView extends View {
 
         mBufferCanvas.save();
         mBufferCanvas.rotate(rotate, operateRect.centerX(), operateRect.centerY());
-        mBufferCanvas.drawBitmap(bitmap, mSrcRect, operateRect, mMaterialPaint);
+        mBufferCanvas.drawBitmap(bitmap, mSrcRect, operateRect, mDrawBitmapPaint);
         mBufferCanvas.restore();
         invalidate();
     }
@@ -195,7 +194,7 @@ public class MagicView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (mBufferBitmap != null && !mBufferBitmap.isRecycled()) {
-            canvas.drawBitmap(mBufferBitmap, 0f, 0f, null);
+            canvas.drawBitmap(mBufferBitmap, 0f, 0f, mDrawBitmapPaint);
         }
     }
 
