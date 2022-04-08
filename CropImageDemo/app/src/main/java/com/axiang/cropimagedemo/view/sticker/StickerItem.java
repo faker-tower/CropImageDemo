@@ -175,6 +175,7 @@ public class StickerItem {
 
         Log.d(TAG, "angle: " + angle);
         mRotateAngle += angle;
+        Log.d(TAG, "mRotateAngle: " + mRotateAngle);
         mStickerMatrix.postRotate(angle, mDstRect.centerX(), mDstRect.centerY());
 
         RectUtil.rotateRect(mDetectRotateRect, mDstRect.centerX(), mDstRect.centerY(), mRotateAngle);

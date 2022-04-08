@@ -84,14 +84,12 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
      * 清除画布上的所有指尖魔法图
      */
     private void clearMagic() {
-        DialogUtil.showAlertDialog(mActivity, "是否清空？", (dialogInterface, i) -> {
-            mActivity.mMagicView.setEraser(true);
-        });
+        DialogUtil.showAlertDialog(mActivity, "是否清空？",
+                (dialogInterface, i) -> mActivity.mMagicView.clearCanvas());
     }
 
     @Override
     public void onImageClick(String key) {
-        mActivity.mMagicView.setEraser(false);
         mActivity.mMagicView.setMaterials(mMaterialMap.get(key));
     }
 
