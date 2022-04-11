@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,9 +22,15 @@ import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.editimg.sticker.SaveStickerTask;
 import com.axiang.cropimagedemo.util.DialogUtil;
+import com.axiang.cropimagedemo.util.FileUtil;
+import com.axiang.cropimagedemo.util.GsonUtil;
 import com.axiang.cropimagedemo.util.PaintUtil;
+import com.axiang.cropimagedemo.util.ThreadPoolUtil;
+import com.axiang.cropimagedemo.util.ZipUtil;
 
+import java.io.File;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,7 +40,9 @@ import java.util.Map;
 public class MagicFragment extends BaseEditImageFragment implements MagicAdapter.OnItemClickListener,
         SaveStickerTask.TaskListener {
 
+    public static final String TAG = "MagicFragment";
     public static final int INDEX = ModuleConfig.INDEX_MAGIC;
+    private static final String ZIP_FILE_NAME = "103186.zip";
 
     private static final Map<String, String[]> mMaterialMap = new LinkedHashMap<>();
 
@@ -51,6 +61,7 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
                         "magic/space/7.png", "magic/space/8.png", "magic/space/9.png"});
     }
 
+
     private ImageView mIvBackToMain;
     private RecyclerView mRvMagic;
     private ImageView mIvClear;
@@ -58,6 +69,7 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
     private MagicAdapter mMagicAdapter;
 
     private SaveStickerTask mSaveMagicTask;
+    private Runnable mUnzipRunnable;
 
     public static MagicFragment newInstance() {
         return new MagicFragment();
@@ -68,6 +80,7 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_magic, container, false);
         initView(rootView);
+        loadAssetsMagicZipData();
         return rootView;
     }
 
@@ -86,6 +99,65 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
 
         mIvBackToMain.setOnClickListener(view -> backToMain());
         mIvClear.setOnClickListener(view -> clearMagic());
+    }
+
+    /**
+     * 加载 Assets 目录下的 指尖魔法的 zip 资源
+     */
+    private void loadAssetsMagicZipData() {
+        // 解压 zip 资源
+        mUnzipRunnable = () -> ZipUtil.unzip(ZIP_FILE_NAME, new ZipUtil.OnUnzipFinishListener() {
+            @Override
+            public void onSuccess(String successPath) {
+                // 取 data.json 文件中的内容
+                String dataJson = FileUtil.getJsonFileContent(successPath + File.separator + "data.json");
+                if (TextUtils.isEmpty(dataJson)) {
+                    return;
+                }
+
+                // Gson 转实体类
+                MagicData magicData = GsonUtil.JsonToObject(dataJson, MagicData.class);
+                String[] magicFiles = getMagicFiles(magicData);
+                if (magicFiles == null || magicFiles.length <= 0) {
+                    return;
+                }
+
+                // 循环取出所有 a1.json、a2.json、a3.json...axx.json 的数据
+                String key = null;
+                for (String magicFile : magicFiles) {
+                    MagicFrameData magicFrameData = GsonUtil.JsonToObject(magicFile, MagicFrameData.class);
+                    if (key == null) {
+                        key = magicFrameData.getMeta().getImage();
+                    }
+
+                }
+            }
+
+            @Override
+            public void onFailed() {
+                Log.d(TAG, "解压 Assets 目录下的 指尖魔法的 zip 资源失败");
+            }
+        });
+        ThreadPoolUtil.execute(mUnzipRunnable);
+    }
+
+    /**
+     * 取 data.json 文件中的 files 字段
+     */
+    private String[] getMagicFiles(MagicData magicData) {
+        List<MagicData.Frame> frame = magicData.getFrame();
+        if (frame == null || frame.isEmpty()) {
+            return null;
+        }
+
+        List<MagicData.Res> res = frame.get(0).getRes();
+        if (res == null || res.isEmpty()) {
+            return null;
+        }
+
+        String files = res.get(0).getFiles();
+        Log.d(TAG, "getMagicFiles(): " + files);
+        return files.split(",");
     }
 
     /**
