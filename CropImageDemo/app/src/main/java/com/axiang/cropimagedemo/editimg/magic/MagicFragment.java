@@ -44,18 +44,18 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
     public static final int INDEX = ModuleConfig.INDEX_MAGIC;
     private static final String ZIP_FILE_NAME = "103186.zip";
 
-    private static final Map<String, String[]> mMaterialMap = new LinkedHashMap<>();
+    private static final Map<String, String[]> sMaterialMap = new LinkedHashMap<>();
 
     static {
-        mMaterialMap.put("magic/face/1.png",
+        sMaterialMap.put("magic/face/1.png",
                 new String[]{"magic/face/1.png", "magic/face/2.png", "magic/face/3.png",
                         "magic/face/4.png", "magic/face/5.png", "magic/face/6.png",
                         "magic/face/7.png", "magic/face/8.png", "magic/face/9.png"});
-        mMaterialMap.put("magic/love/1.png",
+        sMaterialMap.put("magic/love/1.png",
                 new String[]{"magic/love/1.png", "magic/love/2.png", "magic/love/3.png",
                         "magic/love/4.png", "magic/love/5.png", "magic/love/6.png",
                         "magic/love/7.png", "magic/love/8.png", "magic/love/9.png"});
-        mMaterialMap.put("magic/space/1.png",
+        sMaterialMap.put("magic/space/1.png",
                 new String[]{"magic/space/1.png", "magic/space/2.png", "magic/space/3.png",
                         "magic/space/4.png", "magic/space/5.png", "magic/space/6.png",
                         "magic/space/7.png", "magic/space/8.png", "magic/space/9.png"});
@@ -93,7 +93,7 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(mActivity);
         mLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
         mRvMagic.setLayoutManager(mLayoutManager);
-        mMagicAdapter = new MagicAdapter(mActivity, mMaterialMap.keySet().toArray(new String[0]));
+        mMagicAdapter = new MagicAdapter(mActivity, sMaterialMap.keySet().toArray(new String[0]));
         mMagicAdapter.setOnItemClickListener(this);
         mRvMagic.setAdapter(mMagicAdapter);
 
@@ -115,21 +115,37 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
                     return;
                 }
 
-                // Gson 转实体类
+                // data.json 的 Gson 转实体类
                 MagicData magicData = GsonUtil.JsonToObject(dataJson, MagicData.class);
-                String[] magicFiles = getMagicFiles(magicData);
-                if (magicFiles == null || magicFiles.length <= 0) {
+                // 取 data.json 文件中的 files 字段
+                String[] magicFrameJsonFiles = getMagicFiles(magicData);
+                if (magicFrameJsonFiles == null || magicFrameJsonFiles.length <= 0) {
                     return;
                 }
 
                 // 循环取出所有 a1.json、a2.json、a3.json...axx.json 的数据
+                String frameJsonFile;
+                String frameJson;
+                MagicFrameData frameData;
                 String key = null;
-                for (String magicFile : magicFiles) {
-                    MagicFrameData magicFrameData = GsonUtil.JsonToObject(magicFile, MagicFrameData.class);
-                    if (key == null) {
-                        key = magicFrameData.getMeta().getImage();
+                String[] value = new String[magicFrameJsonFiles.length];
+                for (int i = 0; i < magicFrameJsonFiles.length; i++) {
+                    frameJsonFile = magicFrameJsonFiles[i];
+                    frameJson = FileUtil.getJsonFileContent(successPath + File.separator + frameJsonFile);
+                    frameData = GsonUtil.JsonToObject(frameJson, MagicFrameData.class);
+                    if (frameData == null) {
+                        continue;
                     }
 
+                    value[i] = frameData.getMeta().getImage();
+                    if (key == null) {
+                        key = value[i];
+                    }
+                    Log.d(TAG, String.format("%s 的 image = %s", frameJsonFile, value[i]));
+                }
+
+                if (key != null) {
+                    sMaterialMap.put(key, value);
                 }
             }
 
@@ -170,7 +186,7 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
 
     @Override
     public void onImageClick(String key) {
-        mActivity.mMagicView.setMaterials(mMaterialMap.get(key));
+        mActivity.mMagicView.setMaterials(sMaterialMap.get(key));
     }
 
     @Override
