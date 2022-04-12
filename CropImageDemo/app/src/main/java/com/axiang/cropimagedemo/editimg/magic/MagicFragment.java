@@ -1,11 +1,10 @@
 package com.axiang.cropimagedemo.editimg.magic;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,16 +21,10 @@ import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.editimg.sticker.SaveStickerTask;
 import com.axiang.cropimagedemo.util.DialogUtil;
-import com.axiang.cropimagedemo.util.FileUtil;
-import com.axiang.cropimagedemo.util.GsonUtil;
 import com.axiang.cropimagedemo.util.PaintUtil;
-import com.axiang.cropimagedemo.util.ThreadPoolUtil;
-import com.axiang.cropimagedemo.util.ZipUtil;
 
-import java.io.File;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 指尖魔法 Fragment
@@ -42,25 +35,13 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
 
     public static final String TAG = "MagicFragment";
     public static final int INDEX = ModuleConfig.INDEX_MAGIC;
-    private static final String ZIP_FILE_NAME = "103186.zip";
-
-    private static final Map<String, String[]> sMaterialMap = new LinkedHashMap<>();
+    private static final String[] sZipNameList;
 
     static {
-        sMaterialMap.put("magic/face/1.png",
-                new String[]{"magic/face/1.png", "magic/face/2.png", "magic/face/3.png",
-                        "magic/face/4.png", "magic/face/5.png", "magic/face/6.png",
-                        "magic/face/7.png", "magic/face/8.png", "magic/face/9.png"});
-        sMaterialMap.put("magic/love/1.png",
-                new String[]{"magic/love/1.png", "magic/love/2.png", "magic/love/3.png",
-                        "magic/love/4.png", "magic/love/5.png", "magic/love/6.png",
-                        "magic/love/7.png", "magic/love/8.png", "magic/love/9.png"});
-        sMaterialMap.put("magic/space/1.png",
-                new String[]{"magic/space/1.png", "magic/space/2.png", "magic/space/3.png",
-                        "magic/space/4.png", "magic/space/5.png", "magic/space/6.png",
-                        "magic/space/7.png", "magic/space/8.png", "magic/space/9.png"});
+        sZipNameList = new String[]{"103186.zip"};
     }
 
+    private List<MagicData> mMagicDataList;
 
     private ImageView mIvBackToMain;
     private RecyclerView mRvMagic;
@@ -80,7 +61,6 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_magic, container, false);
         initView(rootView);
-        loadAssetsMagicZipData();
         return rootView;
     }
 
@@ -89,91 +69,46 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
         mRvMagic = rootView.findViewById(R.id.rv_magic);
         mIvClear = rootView.findViewById(R.id.iv_clear);
 
-        mRvMagic.setHasFixedSize(true);
-        LinearLayoutManager mLayoutManager = new LinearLayoutManager(mActivity);
-        mLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
-        mRvMagic.setLayoutManager(mLayoutManager);
-        mMagicAdapter = new MagicAdapter(mActivity, sMaterialMap.keySet().toArray(new String[0]));
-        mMagicAdapter.setOnItemClickListener(this);
-        mRvMagic.setAdapter(mMagicAdapter);
+        initRv();
 
         mIvBackToMain.setOnClickListener(view -> backToMain());
         mIvClear.setOnClickListener(view -> clearMagic());
     }
 
-    /**
-     * 加载 Assets 目录下的 指尖魔法的 zip 资源
-     */
-    private void loadAssetsMagicZipData() {
-        // 解压 zip 资源
-        mUnzipRunnable = () -> ZipUtil.unzip(ZIP_FILE_NAME, new ZipUtil.OnUnzipFinishListener() {
-            @Override
-            public void onSuccess(String successPath) {
-                // 取 data.json 文件中的内容
-                String dataJson = FileUtil.getJsonFileContent(successPath + File.separator + "data.json");
-                if (TextUtils.isEmpty(dataJson)) {
-                    return;
-                }
+    private void initRv() {
+        mRvMagic.setHasFixedSize(true);
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(mActivity);
+        mLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        mRvMagic.setLayoutManager(mLayoutManager);
 
-                // data.json 的 Gson 转实体类
-                MagicData magicData = GsonUtil.JsonToObject(dataJson, MagicData.class);
-                // 取 data.json 文件中的 files 字段
-                String[] magicFrameJsonFiles = getMagicFiles(magicData);
-                if (magicFrameJsonFiles == null || magicFrameJsonFiles.length <= 0) {
-                    return;
-                }
-
-                // 循环取出所有 a1.json、a2.json、a3.json...axx.json 的数据
-                String frameJsonFile;
-                String frameJson;
-                MagicFrameData frameData;
-                String key = null;
-                String[] value = new String[magicFrameJsonFiles.length];
-                for (int i = 0; i < magicFrameJsonFiles.length; i++) {
-                    frameJsonFile = magicFrameJsonFiles[i];
-                    frameJson = FileUtil.getJsonFileContent(successPath + File.separator + frameJsonFile);
-                    frameData = GsonUtil.JsonToObject(frameJson, MagicFrameData.class);
-                    if (frameData == null) {
-                        continue;
-                    }
-
-                    value[i] = frameData.getMeta().getImage();
-                    if (key == null) {
-                        key = value[i];
-                    }
-                    Log.d(TAG, String.format("%s 的 image = %s", frameJsonFile, value[i]));
-                }
-
-                if (key != null) {
-                    sMaterialMap.put(key, value);
-                }
-            }
-
-            @Override
-            public void onFailed() {
-                Log.d(TAG, "解压 Assets 目录下的 指尖魔法的 zip 资源失败");
-            }
-        });
-        ThreadPoolUtil.execute(mUnzipRunnable);
+        mMagicAdapter = new MagicAdapter(mActivity);
+        mMagicAdapter.setOnItemClickListener(this);
+        mRvMagic.setAdapter(mMagicAdapter);
     }
 
-    /**
-     * 取 data.json 文件中的 files 字段
-     */
-    private String[] getMagicFiles(MagicData magicData) {
-        List<MagicData.Frame> frame = magicData.getFrame();
-        if (frame == null || frame.isEmpty()) {
-            return null;
-        }
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        loadData();
+    }
 
-        List<MagicData.Res> res = frame.get(0).getRes();
-        if (res == null || res.isEmpty()) {
-            return null;
-        }
+    @SuppressLint("NotifyDataSetChanged")
+    private void loadData() {
+        mMagicDataList = new ArrayList<>();
+        MagicHelper.fillAssetsData(mMagicDataList);
+        MagicHelper.loadAssetsAllZipData(sZipNameList, magicDataList -> {
+            if (!isAdded()) {
+                return;
+            }
 
-        String files = res.get(0).getFiles();
-        Log.d(TAG, "getMagicFiles(): " + files);
-        return files.split(",");
+            if (mMagicDataList == null || magicDataList == null || magicDataList.isEmpty()) {
+                return;
+            }
+
+            mMagicDataList.addAll(magicDataList);
+            mMagicAdapter.setMagicDataList(mMagicDataList);
+            mActivity.runOnUiThread(() -> mMagicAdapter.notifyDataSetChanged());
+        });
     }
 
     /**
@@ -185,8 +120,8 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
     }
 
     @Override
-    public void onImageClick(String key) {
-        mActivity.mMagicView.setMaterials(sMaterialMap.get(key));
+    public void onImageClick(MagicData data) {
+        mActivity.mMagicView.setMaterials(data);
     }
 
     @Override

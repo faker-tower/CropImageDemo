@@ -1,4 +1,5 @@
 <resources>
         <dimen name="fab_margin">16dp</dimen>
         <dimen name="crop_text_size">16sp</dimen>
+        <dimen name="magic_thumb_size">24dp</dimen>
     </resources>

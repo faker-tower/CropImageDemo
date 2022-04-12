@@ -16,11 +16,13 @@ import android.view.ViewConfiguration;
 
 import androidx.annotation.Nullable;
 
+import com.axiang.cropimagedemo.editimg.magic.MagicData;
 import com.axiang.cropimagedemo.util.BitmapUtil;
 import com.axiang.cropimagedemo.util.PaintUtil;
 import com.axiang.cropimagedemo.util.RectUtil;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by 邱翔威 on 2022/4/7
@@ -33,8 +35,8 @@ public class MagicView extends View {
     private Canvas mBufferCanvas;   // 绘图缓存保管 Canvas
     private Bitmap mBufferBitmap;   // 绘图缓存保管 Bitmap
 
-    private String[] mMaterials;
-    private Bitmap[] mMaterialBitmaps;
+    private MagicData mData;
+    private List<Bitmap> mMaterialList = new ArrayList<>();
     private Rect mSrcRect;
     private RectF mDstRect;
 
@@ -107,7 +109,7 @@ public class MagicView extends View {
     }
 
     private void handleDown(float x, float y) {
-        if (mMaterialBitmaps == null || mMaterialBitmaps.length <= 0) {
+        if (mMaterialList.isEmpty()) {
             return;
         }
 
@@ -119,7 +121,7 @@ public class MagicView extends View {
     }
 
     private void handleMove(float x, float y) {
-        if (mMaterialBitmaps == null || mMaterialBitmaps.length <= 0) {
+        if (mMaterialList.isEmpty()) {
             return;
         }
 
@@ -145,7 +147,7 @@ public class MagicView extends View {
      * 取一个随机素材图标，进行指定的缩放和旋转
      */
     private void operateMaterial(float scale, float rotate) {
-        if (mMaterialBitmaps == null || mMaterialBitmaps.length <= 0) {
+        if (mMaterialList.isEmpty()) {
             return;
         }
 
@@ -173,12 +175,12 @@ public class MagicView extends View {
      * 获取一个随机图标
      */
     private Bitmap getRandomBitmap() {
-        int position = (int) (Math.random() * mMaterialBitmaps.length);
-        return mMaterialBitmaps[position];
+        int position = (int) (Math.random() * mMaterialList.size());
+        return mMaterialList.get(position);
     }
 
     private void handleUp(float x, float y) {
-        if (mMaterialBitmaps == null || mMaterialBitmaps.length <= 0) {
+        if (mMaterialList.isEmpty()) {
             return;
         }
 
@@ -207,13 +209,13 @@ public class MagicView extends View {
     private void recyclerAllBitMaps() {
         mBufferCanvas = null;
         recycleBitmap(mBufferBitmap);
-        if (mMaterialBitmaps != null && mMaterialBitmaps.length > 0) {
-            for (Bitmap materialBitmap : mMaterialBitmaps) {
+        if (!mMaterialList.isEmpty()) {
+            for (Bitmap materialBitmap : mMaterialList) {
                 recycleBitmap(materialBitmap);
             }
         }
-        mMaterials = null;
-        mMaterialBitmaps = null;
+        mData = null;
+        mMaterialList.clear();
     }
 
     private void recycleBitmap(Bitmap bitmap) {
@@ -244,34 +246,38 @@ public class MagicView extends View {
         invalidate();
     }
 
-    public void setMaterials(String[] materials) {
+    public void setMaterials(MagicData data) {
         // 所选魔法图标没变化
-        if ((Arrays.equals(mMaterials, materials))) {
+        if (mData == data) {
             resetRect();
             return;
         }
+        mData = data;
 
-        mMaterials = materials;
+        if (data.isFromZip()) {
+            return;
+        }
 
-        if (mMaterialBitmaps != null && mMaterialBitmaps.length > 0) {
-            for (Bitmap materialBitmap : mMaterialBitmaps) {
+        if (!mMaterialList.isEmpty()) {
+            for (Bitmap materialBitmap : mMaterialList) {
                 if (materialBitmap != null && !materialBitmap.isRecycled()) {
                     materialBitmap.recycle();
                 }
             }
         }
-        mMaterialBitmaps = new Bitmap[materials.length];
-        for (int i = 0; i < mMaterialBitmaps.length; i++) {
-            mMaterialBitmaps[i] = BitmapUtil.getBitmapFromAssetsFile(getContext(), materials[i]);
+        List<String> assetsMagicList = mData.getAssetsMagicList();
+        mMaterialList.clear();
+        for (String s : assetsMagicList) {
+            mMaterialList.add(BitmapUtil.getBitmapFromAssetsFile(getContext(), s));
         }
         resetRect();
     }
 
     private void resetRect() {
-        if (mMaterialBitmaps == null || mMaterialBitmaps[0] == null || mMaterialBitmaps[0].isRecycled()) {
+        if (mMaterialList.get(0) == null || mMaterialList.get(0).isRecycled()) {
             return;
         }
 
-        mSrcRect = new Rect(0, 0, mMaterialBitmaps[0].getWidth(), mMaterialBitmaps[0].getHeight());
+        mSrcRect = new Rect(0, 0, mMaterialList.get(0).getWidth(), mMaterialList.get(0).getHeight());
     }
 }

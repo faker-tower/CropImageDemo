@@ -1,6 +1,8 @@
 package com.axiang.cropimagedemo.editimg.magic;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +13,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.util.BitmapUtil;
+import com.bumptech.glide.Glide;
+
+import java.io.File;
+import java.util.List;
 
 /**
  * Created by 邱翔威 on 2022/4/7
@@ -18,13 +24,12 @@ import com.axiang.cropimagedemo.util.BitmapUtil;
 public class MagicAdapter extends RecyclerView.Adapter<MagicAdapter.ViewHolder> {
 
     private final Context mContext;
-    private final String[] mMaterials;
+    private List<MagicData> mMagicDataList;
 
     private OnItemClickListener mListener;
 
-    public MagicAdapter(Context context, String[] materials) {
+    public MagicAdapter(Context context) {
         mContext = context;
-        mMaterials = materials;
     }
 
     @NonNull
@@ -35,21 +40,32 @@ public class MagicAdapter extends RecyclerView.Adapter<MagicAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.mIvMagic.setImageBitmap(BitmapUtil.getBitmapFromAssetsFile(mContext, mMaterials[position]));
+        MagicData data = mMagicDataList.get(position);
+        if (data.isFromZip()) {
+            MagicData.FrameMeta meta = data.getFrameMetaList().get(0);
+            Glide.with(mContext).load(new File(meta.getFrameImagePath())).into(holder.mIvMagic);
+        } else {
+            holder.mIvMagic.setImageBitmap(BitmapUtil.getBitmapFromAssetsFile(mContext, data.getAssetsThumb()));
+        }
+
         holder.mIvMagic.setOnClickListener(view -> {
             if (mListener != null) {
-                mListener.onImageClick(mMaterials[position]);
+                mListener.onImageClick(mMagicDataList.get(position));
             }
         });
     }
 
     @Override
     public int getItemCount() {
-        return mMaterials == null ? 0 : mMaterials.length;
+        return mMagicDataList == null || mMagicDataList.isEmpty() ? 0 : mMagicDataList.size();
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         mListener = listener;
+    }
+
+    public void setMagicDataList(List<MagicData> magicDataList) {
+        mMagicDataList = magicDataList;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -64,6 +80,6 @@ public class MagicAdapter extends RecyclerView.Adapter<MagicAdapter.ViewHolder> 
 
     public interface OnItemClickListener {
 
-        void onImageClick(String key);
+        void onImageClick(MagicData data);
     }
 }
