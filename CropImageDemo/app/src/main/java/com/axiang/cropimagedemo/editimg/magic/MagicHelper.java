@@ -145,54 +145,48 @@ public class MagicHelper {
     }
 
     /**
-     * 构建 zip 缩略图
-     * 构建 MagicData 缩略图，取 a1 的 frame 数组中的第一个数据作为缩略图
+     * 按照 frame 数组切割 zip 缩略图
      */
-    public static Bitmap generateZipThumbBitmap(String srcImagePath, MagicFrameData frameData) {
-        if (frameData == null) {
+    public static List<Bitmap> splitZipBitmap(MagicData.FrameMeta magicFrameData) {
+        if (!magicFrameData.checkValidity()) {
             return null;
         }
 
-        MagicFrameData.Meta meta = frameData.getMeta();
+        List<Bitmap> result = new ArrayList<>();
+
+        String srcImagePath = magicFrameData.getFrameImagePath();
+        MagicFrameData frameData = magicFrameData.getFrameData();
+
+        MagicFrameData.Meta.Size size = frameData.getMeta().getSize();
         List<MagicFrameData.Frames> frames = frameData.getFrames();
-        if (meta == null || frames == null || frames.isEmpty()) {
-            return null;
+
+        for (MagicFrameData.Frames frame : frames) {
+            // 每一个子 frame 所占原图比例
+            MagicFrameData.Frames.Frame childFrame = frame.getFrame();
+            int scaleW = size.getW() / childFrame.getW();
+            int scaleH = size.getH() / childFrame.getH();
+
+            int thumbReqSize = MainApplication.getContext().getResources()
+                    .getDimensionPixelSize(R.dimen.magic_frame_size);   // 缩略图目标尺寸
+
+            // 缩放目标尺寸
+            int reqW = thumbReqSize * scaleW;
+            int reqH = thumbReqSize * scaleH;
+            Bitmap bitmap = BitmapUtil.getSampledBitmap(srcImagePath, reqW, reqH);
+
+            // 原图和缩放图的比例
+            int sw = size.getW() / bitmap.getWidth();
+            int sH = size.getH() / bitmap.getHeight();
+
+            Bitmap bitmap1 = Bitmap.createBitmap(bitmap,
+                    childFrame.getX() / sw, childFrame.getY() / sH,
+                    childFrame.getW() / sw, childFrame.getH() / sH);  // 裁剪 frame 比例区域
+
+            bitmap.recycle();   // 直接释放
+
+            result.add(bitmap1);
         }
-
-        MagicFrameData.Meta.Size size = meta.getSize();
-        MagicFrameData.Frames.Frame frame = frames.get(0).getFrame();
-        if (size == null || frame == null) {
-            return null;
-        }
-
-        int scaleW = size.getW() / frame.getW();    // frame 所占 原图 宽度比例
-        int scaleH = size.getH() / frame.getH();    // frame 所占 原图 高度比例
-        Log.d(TAG, "size.getW() = " + size.getW() + ", size.getH() = " + size.getH());
-        Log.d(TAG, "frame.getW() = " + frame.getW() + ", frame.getH() = " + frame.getH());
-        Log.d(TAG, "scaleW = " + scaleW + ", scaleH = " + scaleH);
-
-        int thumbReqSize = MainApplication.getContext().getResources()
-                .getDimensionPixelSize(R.dimen.magic_thumb_size);   // 缩略图目标尺寸
-        Log.d(TAG, "thumbReqSize = " + thumbReqSize);
-
-        int reqW = thumbReqSize * scaleW;   // 缩放目标宽度
-        int reqH = thumbReqSize * scaleH;   // 缩放目标高度
-        Log.d(TAG, "reqW = " + reqW + ", reqH = " + reqH);
-
-        Bitmap bitmap = BitmapUtil.getSampledBitmap(srcImagePath, reqW, reqH);
-        int sw = size.getW() / bitmap.getWidth();   // 原图和缩放图的宽度比例
-        int sH = size.getH() / bitmap.getHeight();  // 原图和缩放图的高度比例
-        Log.d(TAG, "bitmap.getWidth = " + bitmap.getWidth() + ", bitmap.getHeight = " + bitmap.getHeight());
-        Log.d(TAG, "sw = " + sw + ", sH = " + sH);
-
-        Bitmap result = Bitmap.createBitmap(bitmap,
-                frame.getX() / sw, frame.getY() / sH,
-                frame.getW() / sw, frame.getH() / sH);  // 裁剪 frame 比例区域
-        Log.d(TAG, "frame.getX() / sw = " + (frame.getX() / sw) + ", frame.getY() / sH = " + (frame.getY() / sH));
-        Log.d(TAG, "frame.getW() / sw = " + (frame.getW() / sw) + ", frame.getH() / sH = " + (frame.getH() / sH));
-
-//        bitmap.recycle();   // 直接释放
-        return bitmap;
+        return result;
     }
 
     /**
