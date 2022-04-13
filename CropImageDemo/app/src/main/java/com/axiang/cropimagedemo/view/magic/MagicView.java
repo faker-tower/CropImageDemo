@@ -276,7 +276,7 @@ public class MagicView extends View {
         invalidate();
     }
 
-    public void setMaterials(MagicData data) {
+    public void setMaterials(MagicData data, int mainBitmapWidth, int mainBitmapHeight) {
         // 所选图标合集没变化
         if (mData == data) {
             return;
@@ -284,7 +284,7 @@ public class MagicView extends View {
         mData = data;
 
         recyclerMaterials();
-        generateMaterials();
+        generateMaterials(mainBitmapWidth, mainBitmapHeight);
     }
 
     /**
@@ -309,13 +309,13 @@ public class MagicView extends View {
     /**
      * 生成素材 Bitmap 合集
      */
-    private void generateMaterials() {
+    private void generateMaterials(int mainBitmapWidth, int mainBitmapHeight) {
         if (mData.isFromZip()) { // 来自 zip 压缩包
             List<MagicData.FrameMeta> frameMetaList = mData.getFrameMetaList();
             if (mBitmapPool == null) {
-                mBitmapPool = new MagicBitmapPool(frameMetaList);
+                mBitmapPool = new MagicBitmapPool(frameMetaList, mainBitmapWidth, mainBitmapHeight);
             } else {
-                mBitmapPool.reset(frameMetaList);
+                mBitmapPool.reset(frameMetaList, mainBitmapWidth, mainBitmapHeight);
             }
         } else {
             ThreadPoolUtil.execute(() -> {

@@ -27,6 +27,7 @@ public class MagicBitmapPool {
 
     private Bitmap[] mBitmaps;
     private List<MagicData.FrameMeta> mFrameMetaList;
+    private int mMainBitmapWidth, mMainBitmapHeight;
 
     private final ReentrantLock mLock = new ReentrantLock();
 
@@ -37,10 +38,11 @@ public class MagicBitmapPool {
     /**
      * @param frameMetaList zip 压缩包中素材信息合集
      */
-    public MagicBitmapPool(@NonNull List<MagicData.FrameMeta> frameMetaList) {
+    public MagicBitmapPool(@NonNull List<MagicData.FrameMeta> frameMetaList,
+                           int mainBitmapWidth, int mainBitmapHeight) {
         mIsLoadingNewBitmaps = new AtomicBoolean();
         mIsLoadingNewBitmaps.set(true);
-        reset(frameMetaList);
+        reset(frameMetaList, mainBitmapWidth, mainBitmapHeight);
     }
 
     /**
@@ -74,7 +76,7 @@ public class MagicBitmapPool {
             Bitmap[] preBitmaps = new Bitmap[count];
             int index = 0;
             for (MagicData.FrameMeta meta : mFrameMetaList) {
-                List<Bitmap> splitBitmaps = MagicHelper.splitZipBitmap(meta);
+                List<Bitmap> splitBitmaps = MagicHelper.splitZipBitmap(meta, mMainBitmapWidth, mMainBitmapHeight);
                 if (splitBitmaps == null) {
                     continue;
                 }
@@ -152,10 +154,13 @@ public class MagicBitmapPool {
     /**
      * 需要重新实例化 mBitmapList
      */
-    public void reset(@NonNull List<MagicData.FrameMeta> frameMetaList) {
+    public void reset(@NonNull List<MagicData.FrameMeta> frameMetaList,
+                      int mainBitmapWidth, int mainBitmapHeight) {
         reset();    // 清空资源
 
         mFrameMetaList = frameMetaList;
+        mMainBitmapWidth = mainBitmapWidth;
+        mMainBitmapHeight = mainBitmapHeight;
         for (MagicData.FrameMeta meta : frameMetaList) {
             List<MagicFrameData.Frames> frames = meta.getFrameData().getFrames();
             if (frames.size() > DEFAULT_BITMAP_POOL_MAX_SIZE) {

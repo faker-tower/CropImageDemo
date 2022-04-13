@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
 
@@ -146,7 +147,8 @@ public class MagicHelper {
     /**
      * 按照 frame 数组切割 zip 缩略图
      */
-    public static List<Bitmap> splitZipBitmap(MagicData.FrameMeta magicFrameData) {
+    public static List<Bitmap> splitZipBitmap(MagicData.FrameMeta magicFrameData,
+                                              int mainBitmapWidth, int mainBitmapHeight) {
         if (!magicFrameData.checkValidity()) {
             return null;
         }
@@ -166,25 +168,51 @@ public class MagicHelper {
             int scaleH = size.getH() / childFrame.getH();
 
             // 按比例缩放目标进行压缩
-            DisplayMetrics metrics = MainApplication.getContext().getResources().getDisplayMetrics();
-            int frameSize = metrics.widthPixels;
-            int reqW = frameSize * scaleW;
-            int reqH = frameSize * scaleH;
+            Pair<Integer, Integer> pair = getFrameReqWidth(size.getW(), size.getH(),
+                    mainBitmapWidth, mainBitmapHeight);
+            int reqW = pair.first * scaleW;
+            int reqH = pair.second * scaleH;
             Bitmap bitmap = BitmapUtil.getSampledBitmap(srcImagePath, reqW, reqH);
 
             // 原图和缩放图的比例
-            int sw = size.getW() / bitmap.getWidth();
+            int sW = size.getW() / bitmap.getWidth();
             int sH = size.getH() / bitmap.getHeight();
 
+            // 裁剪 frame 比例区域
             Bitmap childBitmap = Bitmap.createBitmap(bitmap,
-                    childFrame.getX() / sw, childFrame.getY() / sH,
-                    childFrame.getW() / sw, childFrame.getH() / sH);  // 裁剪 frame 比例区域
+                    childFrame.getX() / sW, childFrame.getY() / sH,
+                    childFrame.getW() / sW, childFrame.getH() / sH);
 
             bitmap.recycle();   // 直接释放
 
             result.add(childBitmap);
         }
         return result;
+    }
+
+    /**
+     * 获取一个 frame 的图最后显示所需要的尺寸，以宽度为基准
+     */
+    private static Pair<Integer, Integer> getFrameReqWidth(int frameSizeWidth, int frameSizeHeight,
+                                                           int mainBitmapWidth, int mainBitmapHeight) {
+        int resultWidth = frameSizeWidth;
+        int resultHeight;
+        DisplayMetrics metrics = MainApplication.getContext().getResources().getDisplayMetrics();
+        int widthPixels = metrics.widthPixels;
+        int heightPixels = metrics.heightPixels;
+
+        resultWidth = Math.min(resultWidth, widthPixels);
+        resultWidth = Math.min(resultWidth, mainBitmapWidth);
+
+        if (resultWidth == frameSizeWidth) {
+            resultHeight = frameSizeHeight;
+        } else if (resultWidth == mainBitmapWidth) {
+            resultHeight = mainBitmapHeight;
+        } else {
+            resultHeight = heightPixels;
+        }
+
+        return new Pair<>(resultWidth, resultHeight);
     }
 
     /**

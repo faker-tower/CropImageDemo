@@ -118,7 +118,7 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
 
     @Override
     public void onImageClick(MagicData data) {
-        mActivity.mMagicView.setMaterials(data);
+        mActivity.mMagicView.setMaterials(data, mActivity.mMainBitmap.getWidth(), mActivity.mMainBitmap.getHeight());
     }
 
     @Override
