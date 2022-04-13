@@ -72,15 +72,15 @@ public class ZipUtil {
             while (zipEntry != null) {
                 if (zipEntry.isDirectory()) {   // 如果是一个目录
                     if (successPath == null) {  // zip文件的格式：最外层的目录就对应文件名
-                        successPath = folderPath + File.separator + zipEntry.getName();
+                        successPath = FileUtil.addSeparator(folderPath) + zipEntry.getName();
                     }
-                    file = new File(folderPath + File.separator + zipEntry.getName());
+                    file = new File(FileUtil.addSeparator(folderPath) + zipEntry.getName());
                     // 文件不存在
                     if (!file.exists()) {
                         file.mkdir();
                     }
                 } else {    // 如果是文件
-                    file = new File(folderPath + File.separator + zipEntry.getName());
+                    file = new File(FileUtil.addSeparator(folderPath) + zipEntry.getName());
                     // 文件不存在
                     if (!file.exists()) {
                         file.createNewFile();

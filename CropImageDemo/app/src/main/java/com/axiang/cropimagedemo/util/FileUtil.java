@@ -141,4 +141,16 @@ public class FileUtil {
 
         return stringBuilder.toString();
     }
+
+
+    /**
+     * 判断 path 是不是 File.separator 结尾，不是就加上
+     */
+    public static String addSeparator(String path) {
+        String result = path;
+        if (path.charAt(path.length() - 1) != File.separatorChar) {
+            result += File.separator;
+        }
+        return result;
+    }
 }

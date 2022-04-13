@@ -16,12 +16,12 @@ import android.view.ViewConfiguration;
 
 import androidx.annotation.Nullable;
 
-import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.magic.MagicData;
-import com.axiang.cropimagedemo.editimg.magic.MagicHelper;
 import com.axiang.cropimagedemo.util.BitmapUtil;
 import com.axiang.cropimagedemo.util.PaintUtil;
 import com.axiang.cropimagedemo.util.RectUtil;
+import com.axiang.cropimagedemo.util.ThreadPoolUtil;
+import com.axiang.cropimagedemo.widget.MagicBitmapPool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +37,9 @@ public class MagicView extends View {
     private Canvas mBufferCanvas;   // 绘图缓存保管 Canvas
     private Bitmap mBufferBitmap;   // 绘图缓存保管 Bitmap
 
+    private MagicBitmapPool mBitmapPool;
     private MagicData mData;
-    private List<Bitmap> mMaterialList = new ArrayList<>();
+    private List<Bitmap> mMaterialList;
     private Rect mSrcRect;
     private RectF mDstRect;
 
@@ -68,6 +69,8 @@ public class MagicView extends View {
         mEraserPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
         mDrawBitmapPaint = PaintUtil.newDefaultPaint();
+
+        mMaterialList = new ArrayList<>();
     }
 
     @Override
@@ -94,6 +97,8 @@ public class MagicView extends View {
             case MotionEvent.ACTION_DOWN:
                 result = true;
                 handleDown(x, y);
+                mLastX = mInitX = x;
+                mLastY = mInitY = y;
                 break;
             case MotionEvent.ACTION_MOVE:
                 result = true;
@@ -111,33 +116,57 @@ public class MagicView extends View {
     }
 
     private void handleDown(float x, float y) {
-        if (mMaterialList.isEmpty()) {
+        if (isEmptyBitmaps()) {
             return;
+        }
+        initRect(x, y);
+    }
+
+    /**
+     * 单独提取出来初始化主要是因为 move 过程中图片突然加载出来了而此时 mDstRect 为空会导致崩溃
+     */
+    private void initRect(float x, float y) {
+        if (mSrcRect == null) {
+            if (mData.isFromZip()) {
+                Bitmap bitmap = mBitmapPool.getFirstBitmap();
+                mSrcRect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+            } else {
+                mSrcRect = new Rect(0, 0, mMaterialList.get(0).getWidth(), mMaterialList.get(0).getHeight());
+            }
         }
 
         mDstRect = new RectF(mSrcRect);
         mDstRect.offsetTo(x - ((float) mSrcRect.width()) / 2,
                 y - ((float) mSrcRect.height()) / 2);
-        mLastX = mInitX = x;
-        mLastY = mInitY = y;
+    }
+
+    private boolean isEmptyBitmaps() {
+        if (mData == null) {
+            return true;
+        }
+        return (mData.isFromZip() && mBitmapPool.isNoFillFull()) || (!mData.isFromZip() && mMaterialList.isEmpty());
     }
 
     private void handleMove(float x, float y) {
-        if (mMaterialList.isEmpty()) {
+        if (isEmptyBitmaps()) {
             return;
         }
 
         float dx = x - mLastX;
         float dy = y - mLastY;
-        // 每滑动 30dp 才显示一个图标
-        if (Math.abs(dx) < mSrcRect.width() && Math.abs(dy) < mSrcRect.width()) {
+        // 每滑动 60 才显示一个图标
+        if (Math.abs(dx) < MATERIALS_VIEW_SIZE && Math.abs(dy) < MATERIALS_VIEW_SIZE) {
             return;
         }
 
-        mDstRect.offset(dx, dy);
+        if (mDstRect == null) {
+            initRect(x, y);
+        } else {
+            mDstRect.offset(dx, dy);
+        }
 
         // 对图标进行随机略微的缩放和旋转操作
-        float scale = (float) ((((Math.random() + 1) * 3) + 8f) / 10); // 缩放区间：[0.8-1.4)
+        float scale = (float) ((((Math.random() + 1) * 2) + 8f) / 10); // 缩放区间：[0.8-1.2)
         float rotate = (float) (Math.random() * 360);   // 旋转区间：[0-360)
         operateMaterial(scale, rotate);
 
@@ -149,10 +178,6 @@ public class MagicView extends View {
      * 取一个随机素材图标，进行指定的缩放和旋转
      */
     private void operateMaterial(float scale, float rotate) {
-        if (mMaterialList.isEmpty()) {
-            return;
-        }
-
         Bitmap bitmap = getRandomBitmap();
 
         RectF operateRect = new RectF(mDstRect);
@@ -177,12 +202,16 @@ public class MagicView extends View {
      * 获取一个随机图标
      */
     private Bitmap getRandomBitmap() {
+        if (mData.isFromZip()) {
+            return mBitmapPool.getBitmap();
+        }
+
         int position = (int) (Math.random() * mMaterialList.size());
         return mMaterialList.get(position);
     }
 
     private void handleUp(float x, float y) {
-        if (mMaterialList.isEmpty()) {
+        if (isEmptyBitmaps()) {
             return;
         }
 
@@ -190,8 +219,12 @@ public class MagicView extends View {
             return;
         }
 
+        if (mDstRect == null) {
+            initRect(x, y);
+        }
+
         float rotate = (float) (Math.random() * 360);   // 旋转区间：[0-360)
-        operateMaterial(4f, rotate);
+        operateMaterial(2f, rotate);
     }
 
     @Override
@@ -211,13 +244,8 @@ public class MagicView extends View {
     private void recyclerAllBitMaps() {
         mBufferCanvas = null;
         recycleBitmap(mBufferBitmap);
-        if (!mMaterialList.isEmpty()) {
-            for (Bitmap materialBitmap : mMaterialList) {
-                recycleBitmap(materialBitmap);
-            }
-        }
+        recyclerMaterials();
         mData = null;
-        mMaterialList.clear();
     }
 
     private void recycleBitmap(Bitmap bitmap) {
@@ -251,47 +279,51 @@ public class MagicView extends View {
     public void setMaterials(MagicData data) {
         // 所选图标合集没变化
         if (mData == data) {
-            resetRect();
             return;
         }
         mData = data;
 
-        if (!mMaterialList.isEmpty()) {
-            for (Bitmap materialBitmap : mMaterialList) {
-                if (materialBitmap != null && !materialBitmap.isRecycled()) {
-                    materialBitmap.recycle();
-                }
-            }
-            mMaterialList.clear();
-        }
-
-        // 来自 zip 压缩包
-        if (data.isFromZip()) {
-            List<MagicData.FrameMeta> frameMetaList = data.getFrameMetaList();
-            for (MagicData.FrameMeta meta : frameMetaList) {
-                if (!meta.checkValidity()) {
-                    continue;
-                }
-                List<Bitmap> bitmaps = MagicHelper.splitZipBitmap(meta);
-                if (bitmaps != null) {
-                    mMaterialList.addAll(bitmaps);
-                }
-            }
-        } else {
-            List<String> assetsMagicList = mData.getAssetsMagicList();
-            for (String s : assetsMagicList) {
-                mMaterialList.add(BitmapUtil.getBitmapFromAssetsFile(getContext(), s));
-            }
-        }
-        resetRect();
+        recyclerMaterials();
+        generateMaterials();
     }
 
-    private void resetRect() {
-        if (mMaterialList.get(0) == null || mMaterialList.get(0).isRecycled()) {
-            return;
+    /**
+     * 清空素材 Bitmap 合集
+     */
+    private void recyclerMaterials() {
+        if (mBitmapPool != null) {
+            mBitmapPool.reset();
         }
 
-        int size = getResources().getDimensionPixelSize(R.dimen.magic_frame_size);
-        mSrcRect = new Rect(0, 0, size, size);
+        if (!mMaterialList.isEmpty()) {
+            for (Bitmap materialBitmap : mMaterialList) {
+                recycleBitmap(materialBitmap);
+            }
+        }
+        mMaterialList.clear();
+
+        mSrcRect = null;
+        mDstRect = null;
+    }
+
+    /**
+     * 生成素材 Bitmap 合集
+     */
+    private void generateMaterials() {
+        if (mData.isFromZip()) { // 来自 zip 压缩包
+            List<MagicData.FrameMeta> frameMetaList = mData.getFrameMetaList();
+            if (mBitmapPool == null) {
+                mBitmapPool = new MagicBitmapPool(frameMetaList);
+            } else {
+                mBitmapPool.reset(frameMetaList);
+            }
+        } else {
+            ThreadPoolUtil.execute(() -> {
+                List<String> assetsMagicList = mData.getAssetsMagicList();
+                for (String s : assetsMagicList) {
+                    mMaterialList.add(BitmapUtil.getBitmapFromAssetsFile(getContext(), s));
+                }
+            });
+        }
     }
 }

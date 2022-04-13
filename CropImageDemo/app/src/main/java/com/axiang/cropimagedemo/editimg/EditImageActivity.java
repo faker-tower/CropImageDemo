@@ -164,8 +164,9 @@ public class EditImageActivity extends AppCompatActivity {
                 .into(new BitmapImageViewTarget(mMainImageView) {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        mMainBitmap = resource;
                         super.onResourceReady(resource, transition);
+                        // 复制一份bitmap，避免加载bitmap后，bitmap被回收
+                        mMainBitmap = Bitmap.createBitmap(resource);
                     }
                 });
     }

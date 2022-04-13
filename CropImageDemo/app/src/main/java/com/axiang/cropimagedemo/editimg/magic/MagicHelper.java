@@ -2,17 +2,19 @@ package com.axiang.cropimagedemo.editimg.magic;
 
 import android.graphics.Bitmap;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.axiang.cropimagedemo.MainApplication;
-import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.util.BitmapUtil;
+import com.axiang.cropimagedemo.util.CollectionUtil;
 import com.axiang.cropimagedemo.util.FileUtil;
 import com.axiang.cropimagedemo.util.GsonUtil;
 import com.axiang.cropimagedemo.util.ThreadPoolUtil;
 import com.axiang.cropimagedemo.util.ZipUtil;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,11 +30,7 @@ public class MagicHelper {
     /**
      * 填充 assets 文件夹里的素材到 magicDataList
      */
-    public static void fillAssetsData(List<MagicData> magicDataList) {
-        if (magicDataList == null) {
-            return;
-        }
-
+    public static void fillAssetsData(@NonNull List<MagicData> magicDataList) {
         // 添加 assets -> magic -> face 文件夹里的素材
         MagicData faceData = new MagicData(false);
         faceData.setAssetsThumb("magic/face/1.png");
@@ -70,7 +68,7 @@ public class MagicHelper {
      * @param zipAssetsFileNames assets 文件夹中素材 zip 文件名字合集
      */
     public static void loadAssetsAllZipData(String[] zipAssetsFileNames, OnLoadAssetsZipListener listener) {
-        if (zipAssetsFileNames == null || zipAssetsFileNames.length <= 0) {
+        if (CollectionUtil.isEmpty(zipAssetsFileNames)) {
             return;
         }
 
@@ -97,7 +95,7 @@ public class MagicHelper {
             @Override
             public void onSuccess(String successPath) {
                 // 取 data.json 文件中的内容
-                String dataJson = FileUtil.getJsonFileContent(successPath + File.separator + "data.json");
+                String dataJson = FileUtil.getJsonFileContent(FileUtil.addSeparator(successPath) + "data.json");
                 if (TextUtils.isEmpty(dataJson)) {
                     return;
                 }
@@ -105,8 +103,8 @@ public class MagicHelper {
                 // data.json 的 Gson 转实体类
                 MagicDataJson magicDataJson = GsonUtil.JsonToObject(dataJson, MagicDataJson.class);
                 // 取 data.json 文件中的 files 字段
-                String[] magicFrameJsonFiles = getMagicFiles(magicDataJson);
-                if (magicFrameJsonFiles == null || magicFrameJsonFiles.length <= 0) {
+                String[] dataJsonFiles = getDataJsonFiles(magicDataJson);
+                if (CollectionUtil.isEmpty(dataJsonFiles)) {
                     return;
                 }
 
@@ -114,17 +112,18 @@ public class MagicHelper {
                 String frameJson;
                 MagicFrameData frameData;
                 List<MagicData.FrameMeta> frameMetaList = new ArrayList<>();
-                for (String jsonFile : magicFrameJsonFiles) {
-                    frameJson = FileUtil.getJsonFileContent(successPath + File.separator + jsonFile);
+                for (String jsonFile : dataJsonFiles) {
+                    frameJson = FileUtil.getJsonFileContent(FileUtil.addSeparator(successPath) + jsonFile);
                     frameData = GsonUtil.JsonToObject(frameJson, MagicFrameData.class);
                     if (frameData == null) {
                         continue;
                     }
 
+                    // 构建数据转化
                     String image = frameData.getMeta().getImage();
-                    Log.d(TAG, String.format("%s 的 image = %s", jsonFile, frameData.getMeta().getImage()));
+                    Log.d(TAG, String.format("%s 的 image = %s", jsonFile, image));
                     MagicData.FrameMeta meta = new MagicData.FrameMeta();
-                    meta.setFrameImagePath(successPath + File.separator + image);
+                    meta.setFrameImagePath(FileUtil.addSeparator(successPath) + image);
                     meta.setFrameData(frameData);
                     frameMetaList.add(meta);
                 }
@@ -166,25 +165,24 @@ public class MagicHelper {
             int scaleW = size.getW() / childFrame.getW();
             int scaleH = size.getH() / childFrame.getH();
 
-            int thumbReqSize = MainApplication.getContext().getResources()
-                    .getDimensionPixelSize(R.dimen.magic_frame_size);   // 缩略图目标尺寸
-
-            // 缩放目标尺寸
-            int reqW = thumbReqSize * scaleW;
-            int reqH = thumbReqSize * scaleH;
+            // 按比例缩放目标进行压缩
+            DisplayMetrics metrics = MainApplication.getContext().getResources().getDisplayMetrics();
+            int frameSize = metrics.widthPixels;
+            int reqW = frameSize * scaleW;
+            int reqH = frameSize * scaleH;
             Bitmap bitmap = BitmapUtil.getSampledBitmap(srcImagePath, reqW, reqH);
 
             // 原图和缩放图的比例
             int sw = size.getW() / bitmap.getWidth();
             int sH = size.getH() / bitmap.getHeight();
 
-            Bitmap bitmap1 = Bitmap.createBitmap(bitmap,
+            Bitmap childBitmap = Bitmap.createBitmap(bitmap,
                     childFrame.getX() / sw, childFrame.getY() / sH,
                     childFrame.getW() / sw, childFrame.getH() / sH);  // 裁剪 frame 比例区域
 
             bitmap.recycle();   // 直接释放
 
-            result.add(bitmap1);
+            result.add(childBitmap);
         }
         return result;
     }
@@ -192,14 +190,14 @@ public class MagicHelper {
     /**
      * 取 data.json 文件中的 files 字段
      */
-    public static String[] getMagicFiles(MagicDataJson magicData) {
-        List<MagicDataJson.Frame> frame = magicData.getFrame();
-        if (frame == null || frame.isEmpty()) {
+    private static String[] getDataJsonFiles(MagicDataJson magicDataJson) {
+        List<MagicDataJson.Frame> frame = magicDataJson.getFrame();
+        if (CollectionUtil.isEmpty(frame)) {
             return null;
         }
 
         List<MagicDataJson.Res> res = frame.get(0).getRes();
-        if (res == null || res.isEmpty()) {
+        if (CollectionUtil.isEmpty(res)) {
             return null;
         }
 

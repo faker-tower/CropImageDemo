@@ -20,6 +20,7 @@ import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.editimg.BaseEditImageFragment;
 import com.axiang.cropimagedemo.editimg.EditImageActivity;
 import com.axiang.cropimagedemo.editimg.sticker.SaveStickerTask;
+import com.axiang.cropimagedemo.util.CollectionUtil;
 import com.axiang.cropimagedemo.util.DialogUtil;
 import com.axiang.cropimagedemo.util.PaintUtil;
 
@@ -101,11 +102,7 @@ public class MagicFragment extends BaseEditImageFragment implements MagicAdapter
                 return;
             }
 
-            if (mMagicDataList == null || magicDataList == null || magicDataList.isEmpty()) {
-                return;
-            }
-
-            mMagicDataList.addAll(magicDataList);
+            CollectionUtil.addAll(mMagicDataList, magicDataList);
             mMagicAdapter.setMagicDataList(mMagicDataList);
             mActivity.runOnUiThread(() -> mMagicAdapter.notifyDataSetChanged());
         });

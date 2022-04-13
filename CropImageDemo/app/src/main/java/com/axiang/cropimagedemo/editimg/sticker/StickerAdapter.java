@@ -13,8 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.axiang.cropimagedemo.R;
 import com.axiang.cropimagedemo.util.BitmapUtil;
+import com.axiang.cropimagedemo.util.FileUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +66,7 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
         try {
             String[] files = mContext.getAssets().list(folderPath);
             for (String name : files) {
-                mStickerPathList.add(folderPath + File.separator + name);
+                mStickerPathList.add(FileUtil.addSeparator(folderPath) + name);
             }
         } catch (IOException e) {
             Log.e(TAG, "addStickerImages 方法抛出了异常：" + e);
